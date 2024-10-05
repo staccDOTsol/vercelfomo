@@ -5,7 +5,8 @@ import { Button, Card, CardBody, Input, Progress, Tab, Tabs } from "@nextui-org/
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import SidebarStats from "@/components/sidebar-stats";
-
+import SlippageInput from "@/components/slippage-input";
+import AmountInput from "@/components/amount-input";
 export default function SingleTokenSidebar({
 	token,
 }: {
@@ -65,79 +66,9 @@ export default function SingleTokenSidebar({
 								<Tab key="sell" title="Sell" />
 							</Tabs>
 
-							<Card className="bg-transparent border border-white/10">
-								<CardBody className="p-0 flex flex-col gap-0">
-									<Input
-										type="number"
-										placeholder="0.00"
-										labelPlacement="outside"
-                    aria-label="Amount"
-                    classNames={{
-                      input: [
-                        "bg-transparent",
-                        "rounded-b-none",
-                        "pt-[2px]",
-                        "hover:bg-transparent",
-                        "text-lg"
-                      ],
-                      inputWrapper: [
-                        "bg-transparent",
-                        "rounded-b-none",
-                        "hover:bg-transparent",
-                      ],
-                    }}
-										startContent={
-											<Icon icon="token-branded:sol" />
-										}
-									/>
+							<AmountInput />
 
-                  <div className="bg-white/10 grid grid-cols-6 gap-0">
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">0.01</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">0.25</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">0.5</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">1</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">2</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">5</Button>
-                  </div>
-								</CardBody>
-							</Card>
-
-              <Card className="bg-transparent border border-white/10">
-								<CardBody className="p-0 flex flex-col gap-0">
-									<Input
-										type="number"
-										placeholder="0.00"
-										labelPlacement="outside"
-                    aria-label="Slippage"
-                    classNames={{
-                      input: [
-                        "bg-transparent",
-                        "rounded-b-none",
-                        "pt-[2px]",
-                        "hover:bg-transparent",
-                        "text-lg"
-                      ],
-                      inputWrapper: [
-                        "bg-transparent",
-                        "rounded-b-none",
-                        "hover:bg-transparent",
-                      ],
-                    }}
-										startContent={
-											<span className="text-white/50">Slippage</span>
-										}
-									/>
-
-                  <div className="bg-white/10 grid grid-cols-6 gap-0">
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">5%</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">10%</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">15%</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">20%</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">25%</Button>
-                    <Button size="sm" className="bg-transparent text-md hover:bg-white/10">50%</Button>
-                  </div>
-								</CardBody>
-							</Card>
+              <SlippageInput />
 
               <div className="flex flex-col gap-2 items-center">
                 <Button
