@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { Button, Card, CardBody, Input, Progress, Tab, Tabs } from "@nextui-org/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import SidebarStats from "@/components/sidebar-stats";
 
 export default function SingleTokenSidebar({
 	token,
@@ -152,6 +153,10 @@ export default function SingleTokenSidebar({
 						</CardBody>
 					</Card>
 				</div>
+
+        <div>
+          <SidebarStats />
+        </div>
 			</div>
 		</>
 	);
