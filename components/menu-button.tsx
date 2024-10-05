@@ -10,12 +10,12 @@ export default function MenuButton({ toggleSidebar }: { toggleSidebar: () => voi
 
 	const getButtonPosition = () => {
     if (!pathName) return "top-14 left-4";
-    
+
 		switch (true) {
 			case /^\/token(\/.*)?$/.test(pathName):
 				return "top-16 left-4";
       case /^\/multi-chart(\/.*)?$/.test(pathName): 
-        return "top-6 left-6" 
+        return "top-[72px] left-6" 
 			default:
 				return "top-14 left-4";
 		}
