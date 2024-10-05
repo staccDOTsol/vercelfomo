@@ -19,7 +19,7 @@ export default function MenuButton({ toggleSidebar }: { toggleSidebar: () => voi
 	};
 
 	return (
-		<Button onClick={toggleSidebar} className={clsx("absolute left-4", getButtonTopPosition())} size="md" isIconOnly>
+		<Button onClick={toggleSidebar} className={clsx("absolute left-4 md:hidden", getButtonTopPosition())} size="md" isIconOnly>
 			<Icon icon="iconoir:menu" width={20} />
 		</Button>
 	);

@@ -6,12 +6,30 @@ import SidebarContainer from "@/components/sidebar-container";
 
 import { Providers } from "./providers";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MenuButton from "@/components/menu-button";
 
+function useIsMobile() {
+	const [isMobile, setIsMobile] = useState(false);
+
+	useEffect(() => {
+		const checkIsMobile = () => {
+			setIsMobile(window.innerWidth <= 768); // Example breakpoint for mobile
+		};
+
+		checkIsMobile();
+		window.addEventListener("resize", checkIsMobile);
+
+		return () => window.removeEventListener("resize", checkIsMobile);
+	}, []);
+
+	return isMobile;
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+	const isMobile = useIsMobile(); // Add this line
 
 	const toggleSidebar = () => {
 		setIsSidebarOpen(!isSidebarOpen);
@@ -29,9 +47,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					<div className="h-dvh flex">
 						<motion.div
 							initial={{ x: "-100%" }}
-							animate={{ x: isSidebarOpen ? 0 : "-100%" }}
+							animate={{ x: isMobile ? (isSidebarOpen ? 0 : "-100%") : 0 }}
 							transition={{ type: "spring", stiffness: 300, damping: 30 }}
-							className="absolute z-10 h-screen"
+							className="absolute md:relative z-10 h-screen"
 						>
 							<SidebarContainer toggleSidebar={toggleSidebar} />
 						</motion.div>
