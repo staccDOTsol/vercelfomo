@@ -62,7 +62,7 @@ export default function SidebarContainer({ toggleSidebar }: { toggleSidebar: () 
 				<Spacer y={8} />
 			</ScrollShadow>
 
-			<Button className="mb-4 h-16 items-center justify-between" variant="light">
+			<Button className="h-16 items-center justify-between" variant="light">
 				<User
 					avatarProps={{
 						size: "sm",
