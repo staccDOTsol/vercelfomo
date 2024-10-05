@@ -16,7 +16,6 @@ export default function Home() {
 	if (isLoading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 	if (error) return <div className="flex items-center justify-center h-screen">Error: {error.message}</div>;
 
-
 	return (
     <div>
       <div className="flex flex-col items-center justify-center">
@@ -43,7 +42,7 @@ export default function Home() {
           </div>
         </div>
         <h1 className="text-[50px] font-bold text-center pt-10 md:pt-0 leading-none hidden md:block">FOMO 3D</h1>
-        <Image src={Logo.src} alt="Logo" width={150} height={150} className="mb-2" />
+        <Image src={Logo.src} alt="Logo" width={150} height={150} className="mb-2 md:hidden" />
         <p className="text-center text-xl opacity-70 pb-6 px-4">The future of crypto is here. Get a jump start on the next big token launch.</p>
         <div className="flex items-center gap-2 pb-10">
           <Button size="md" color="primary" className="text-lg">Get Started</Button>
