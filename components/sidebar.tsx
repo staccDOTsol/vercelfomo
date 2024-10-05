@@ -61,10 +61,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
 
     const pathname = usePathname();
 
-    console.info('[[[INNER selected]]]', selected);  
-
     useEffect(() => {
-      console.log('pathname', pathname);
       // Switch case to check if pathname contains specific routes
       switch (true) {
         case pathname === '/':
@@ -284,7 +281,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
             itemClasses?.base,
           ),
           title: cn(
-            "text-small font-medium text-default-500 group-data-[selected=true]:text-foreground",
+            "text-md font-medium text-default-500 group-data-[selected=true]:text-foreground",
             itemClasses?.title,
           ),
         }}

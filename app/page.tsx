@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Button, Card, CardBody, Divider, Progress, Tab, Tabs } from "@nextui-org/react";
+import { Button, Card, CardBody, Divider, Link, Progress, Tab, Tabs } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 import useCoins from "@/app/hooks/useCoins";
 import { useRouter } from 'next/navigation'
@@ -66,15 +66,15 @@ const { coins, isLoading, error } = useCoins();
             }}>
               <CardBody className="flex flex-col gap-2">
                 <div className="flex items-center gap-1 absolute top-2 right-2">
-                  <div>
+                  <Link href={coin.twitter} target="_blank" className="text-white/90">
                     <Icon icon="arcticons:x-twitter" />
-                  </div>
-                  <div>
+                  </Link>
+                  <Link href={coin.telegram} target="_blank" className="text-white/90">
                     <Icon icon="arcticons:telegram" />
-                  </div>
-                  <div>
+                  </Link>
+                  <Link href={coin.website} target="_blank" className="text-white/90">
                     <Icon icon="arcticons:emoji-globe-with-meridians" />
-                  </div>
+                  </Link>
                 </div>
                 <div className="flex items-center gap-4">
                   <Image

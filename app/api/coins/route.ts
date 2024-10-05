@@ -18,7 +18,10 @@ const mockData = Array.from({ length: 20 }, (_, index) => ({
   summary: `This is a summary for Coin Name ${index + 1}.`,
   percentComplete: Math.floor(Math.random() * 100),
   txns: Math.floor(Math.random() * 1000),
-  totalVolume: `${(Math.random() * 100000).toFixed(2)}`
+  totalVolume: `${(Math.random() * 100000).toFixed(2)}`,
+  twitter: "https://twitter.com",
+  telegram: "https://t.me",
+  website: "https://example.com"
 }));
 
 export async function GET() {
