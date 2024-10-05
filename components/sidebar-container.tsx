@@ -4,6 +4,8 @@ import { Icon } from "@iconify/react";
 import Sidebar, { SidebarItem } from "@/components/sidebar";
 import Logo from "@/app/assets/images/logo_color.svg";
 
+import { sidebarItems } from "@/local-data/sidebar-items";
+
 import {
 	Button,
 	Input,
@@ -11,46 +13,6 @@ import {
 	Spacer,
 	User,
 } from "@nextui-org/react";
-import { useState, useEffect } from "react";
-
-const sidebarItems: SidebarItem[] = [
-	{
-		key: "watchlist",
-		href: "/",
-		icon: "solar:star-bold",
-		title: "Watchlist",
-	},
-	{
-		key: "alerts",
-		href: "#",
-		icon: "solar:bell-bold",
-		title: "Alerts",
-	},
-	{
-		key: "multicharts",
-		href: "/multi-chart",
-		icon: "solar:code-scan-bold",
-		title: "Multicharts",
-	},
-	{
-		key: "new-pairs",
-		href: "#",
-		icon: "solar:leaf-bold",
-		title: "New Pairs",
-	},
-	{
-		key: "gainers-losers",
-		href: "#",
-		icon: "solar:chart-square-bold",
-		title: "Gainers and Losers",
-	},
-	{
-		key: "portfolio",
-		href: "#",
-		icon: "solar:wallet-2-bold",
-		title: "Portfolio",
-	},
-];
 
 const user = {
   id: 1,
