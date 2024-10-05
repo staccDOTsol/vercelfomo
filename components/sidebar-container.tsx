@@ -11,11 +11,12 @@ import {
 	Spacer,
 	User,
 } from "@nextui-org/react";
+import { useState, useEffect } from "react";
 
 const sidebarItems: SidebarItem[] = [
 	{
-		key: "home",
-		href: "#",
+		key: "watchlist",
+		href: "/",
 		icon: "solar:star-bold",
 		title: "Watchlist",
 	},
@@ -27,7 +28,7 @@ const sidebarItems: SidebarItem[] = [
 	},
 	{
 		key: "multicharts",
-		href: "#",
+		href: "/multi-chart",
 		icon: "solar:code-scan-bold",
 		title: "Multicharts",
 	},
@@ -51,16 +52,14 @@ const sidebarItems: SidebarItem[] = [
 	},
 ];
 
-const users = [
-	{
-		id: 1,
-		name: "Jonathon",
-		avatar: "https://i.pravatar.cc/150?img=3",
-		email: "kate.moore@example.com",
-	},
-];
+const user = {
+  id: 1,
+  name: "Jonathon",
+  avatar: "https://i.pravatar.cc/150?img=3",
+}
 
 export default function SidebarContainer({ toggleSidebar }: { toggleSidebar: () => void }) {
+
 	return (
 		<div className="fixed top-0 left-0 flex h-full w-72 flex-col border-r-small border-divider p-6 bg-black">
       <Button onClick={toggleSidebar} className="absolute top-4 right-4 bg-transparent md:hidden" size="md" isIconOnly>
@@ -90,7 +89,7 @@ export default function SidebarContainer({ toggleSidebar }: { toggleSidebar: () 
 
 			<ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
 				<Sidebar
-					defaultSelectedKey="home"
+					defaultSelectedKey={'watchlist'}
 					iconClassName="group-data-[selected=true]:text-primary-foreground"
 					itemClasses={{
 						base: "data-[selected=true]:bg-primary-400 dark:data-[selected=true]:bg-[#9648fe] data-[hover=true]:bg-default-300/20 dark:data-[hover=true]:bg-default-200/40",
@@ -106,10 +105,10 @@ export default function SidebarContainer({ toggleSidebar }: { toggleSidebar: () 
 					avatarProps={{
 						size: "sm",
 						isBordered: false,
-						src: users[0].avatar,
+						src: user.avatar,
 					}}
 					className="justify-start transition-transform"
-					name={users[0].name}
+					name={user.name}
 				/>
 				<Icon className="text-default-400" icon="lucide:chevrons-up-down" width={16} />
 			</Button>

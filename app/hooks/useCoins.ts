@@ -1,13 +1,27 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
-const fetchCoins = async () => {
-  const response = await fetch('/api/coins');
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-  return response.json();
-};
+export default function useCoins() {
+	const fetchCoins = async () => {
+		const response = await fetch("/api/coins");
+		if (!response.ok) {
+			throw new Error("Network response was not ok");
+		}
+		return response.json();
+	};
 
-export const useCoins = () => {
-  return useQuery({ queryKey: ['coins'], queryFn: fetchCoins });
-};
+	const {
+		data: coins,
+		isLoading,
+		error,
+	} = useQuery({
+		queryKey: ["coins"],
+		queryFn: fetchCoins,
+		staleTime: 250000,
+	});
+
+	return {
+		coins,
+		isLoading,
+		error,
+	};
+}

@@ -49,7 +49,7 @@ export default function TokenPage() {
 
 	return (
 		<div className="grid grid-cols-12 min-h-screen">
-			<div className="hidden md:block tradingview-widget-container w-full h-screen col-span-9" ref={container}>
+			<div className="hidden md:block tradingview-widget-container w-full h-screen col-span-9 single-chart" ref={container}>
 				<div className="tradingview-widget-container__widget" style={{ height: "calc(100% - 32px)", width: "100%" }}></div>
 			</div>
 			<div className="col-span-12 md:col-span-3">

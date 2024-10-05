@@ -7,10 +7,11 @@ import {
   type ListboxSectionProps,
   type Selection,
 } from "@nextui-org/react";
-import React from "react";
+import React, { useEffect } from "react";
 import {Listbox, Tooltip, ListboxItem, ListboxSection} from "@nextui-org/react";
 import {Icon} from "@iconify/react";
 import {cn} from "@nextui-org/react";
+import { usePathname } from 'next/navigation'
 
 export enum SidebarItemType {
   Nest = "nest",
@@ -57,6 +58,25 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
     ref,
   ) => {
     const [selected, setSelected] = React.useState<React.Key>(defaultSelectedKey);
+
+    const pathname = usePathname();
+
+    console.info('[[[INNER selected]]]', selected);  
+
+    useEffect(() => {
+      console.log('pathname', pathname);
+      // Switch case to check if pathname contains specific routes
+      switch (true) {
+        case pathname === '/':
+          setSelected('watchlist');
+          break;
+        case pathname.includes('multi-chart'):
+          setSelected('multicharts');
+          break;
+        default:
+          setSelected('watchlist');
+      }
+    }, [pathname]);
 
     const sectionClasses = {
       ...sectionClassesProp,

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Button, Card, CardBody, Divider, Progress, Tab, Tabs } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
-import { useCoins } from "@/app/hooks/useCoins";
+import useCoins from "@/app/hooks/useCoins";
 import { useRouter } from 'next/navigation'
 import ItemFilterBar from "@/components/item-filter-bar";
 
@@ -11,7 +11,7 @@ import Logo from "@/app/assets/images/logo_color.svg";
 
 export default function Home() {
   const router = useRouter()
-	const { data: coins, isLoading, error } = useCoins();
+const { coins, isLoading, error } = useCoins();
 
 	if (isLoading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 	if (error) return <div className="flex items-center justify-center h-screen">Error: {error.message}</div>;

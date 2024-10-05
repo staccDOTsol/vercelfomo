@@ -8,6 +8,10 @@
   font-style: normal;
 }
 
-.tradingview-widget-container > iframe:nth-child(even) {
+.inter {
+  font-family: "Inter", system-ui;
+}
+
+.single-chart > iframe:nth-child(even) {
   display: none !important;
 }
