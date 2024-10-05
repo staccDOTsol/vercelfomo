@@ -7,6 +7,8 @@ import { useCoins } from "@/app/hooks/useCoins";
 import { useRouter } from 'next/navigation'
 import ItemFilterBar from "@/components/item-filter-bar";
 
+import Logo from "@/app/assets/images/logo_color.svg";
+
 export default function Home() {
   const router = useRouter()
 	const { data: coins, isLoading, error } = useCoins();
@@ -40,7 +42,8 @@ export default function Home() {
             </Button>
           </div>
         </div>
-        <h1 className="text-[50px] font-bold text-center pt-10 md:pt-0 leading-none">FOMO 3D</h1>
+        <h1 className="text-[50px] font-bold text-center pt-10 md:pt-0 leading-none hidden md:block">FOMO 3D</h1>
+        <Image src={Logo.src} alt="Logo" width={150} height={150} className="mb-2" />
         <p className="text-center text-xl opacity-70 pb-6 px-4">The future of crypto is here. Get a jump start on the next big token launch.</p>
         <div className="flex items-center gap-2 pb-10">
           <Button size="md" color="primary" className="text-lg">Get Started</Button>
