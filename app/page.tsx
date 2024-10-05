@@ -18,23 +18,23 @@ export default function Home() {
 	return (
     <div>
       <div className="flex flex-col items-center justify-center">
-        <div className="flex items-center justify-between gap-2 w-full p-4">
-          <div className="flex items-center gap-2">
-            <Button variant="flat" size="sm" className="text-md">
+        <div className="flex items-center justify-between gap-1 md:gap-2 w-full p-4">
+          <div className="flex flex-1 md:flex-none items-center gap-1 md:gap-2">
+            <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none">
               <Icon icon="tabler:trending-up" />
               Portfolio
             </Button>
-            <Button variant="flat" size="sm" className="text-md">
+            <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none">
               <Icon icon="tabler:trending-up" />
               Swap
             </Button>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="flat" size="sm" className="text-md">
+          <div className="flex flex-1 md:flex-none items-center gap-1 md:gap-2">
+            <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none">
               <Icon icon="tabler:trending-up" />
               Telegram
             </Button>
-            <Button variant="flat" size="sm" className="text-md">
+            <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none">
               <Icon icon="tabler:trending-up" />
               Twitter
             </Button>

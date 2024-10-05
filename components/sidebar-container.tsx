@@ -62,7 +62,7 @@ const users = [
 
 export default function SidebarContainer({ toggleSidebar }: { toggleSidebar: () => void }) {
 	return (
-		<div className="relative flex h-full w-72 flex-col border-r-small border-divider p-6 bg-black">
+		<div className="fixed top-0 left-0 flex h-full w-72 flex-col border-r-small border-divider p-6 bg-black">
       <Button onClick={toggleSidebar} className="absolute top-4 right-4 bg-transparent md:hidden" size="md" isIconOnly>
       <Icon icon="material-symbols-light:close" width={30} />
       </Button>

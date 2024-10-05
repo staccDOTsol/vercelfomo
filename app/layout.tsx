@@ -41,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
 			<body className={clsx("min-h-screen bg-background antialiased jersey-10-regular")}>
 				<Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
@@ -49,12 +50,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							initial={{ x: "-100%" }}
 							animate={{ x: isMobile ? (isSidebarOpen ? 0 : "-100%") : 0 }}
 							transition={{ type: "spring", stiffness: 300, damping: 30 }}
-							className="absolute md:relative z-10 h-screen"
+							className="fixed top-0 left-0 z-10 h-screen w-72"
 						>
 							<SidebarContainer toggleSidebar={toggleSidebar} />
 						</motion.div>
 
-						<div className="flex flex-col flex-1">
+						<div className="flex flex-col flex-1 md:pl-72">
 							<MenuButton toggleSidebar={toggleSidebar} />
 
 							{children}
