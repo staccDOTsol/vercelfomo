@@ -9,6 +9,9 @@ import { Providers } from "./providers";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MenuButton from "@/components/menu-button";
+import { Icon } from "@iconify/react";
+import { Button } from "@nextui-org/react";
+import TopMenu from "@/components/top-menu";
 
 function useIsMobile() {
 	const [isMobile, setIsMobile] = useState(false);
@@ -57,6 +60,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 						</motion.div>
 
 						<div className="flex flex-col flex-1 md:pl-72">
+              <TopMenu />
+
 							<MenuButton toggleSidebar={toggleSidebar} />
 
 							{children}

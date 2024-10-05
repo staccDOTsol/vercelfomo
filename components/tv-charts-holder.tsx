@@ -17,7 +17,7 @@ export default function TvChartsHolder({ charts, removeChart, addChart }: { char
 
 	return (
 		<div>
-			<div className="p-4 pb-0">
+			<div className="px-4">
 				<Card fullWidth className="bg-zinc-800/20">
 					<CardBody className="">
 						<div className="w-full flex justify-end items-center">

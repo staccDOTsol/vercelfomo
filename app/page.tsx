@@ -19,28 +19,6 @@ const { coins, isLoading, error } = useCoins();
 	return (
     <div>
       <div className="flex flex-col items-center justify-center">
-        <div className="flex items-center justify-between gap-1 md:gap-2 w-full p-4">
-          <div className="flex flex-1 md:flex-none items-center gap-1 md:gap-2">
-            <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none">
-              <Icon icon="tabler:trending-up" />
-              Portfolio
-            </Button>
-            <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none">
-              <Icon icon="tabler:trending-up" />
-              Swap
-            </Button>
-          </div>
-          <div className="flex flex-1 md:flex-none items-center gap-1 md:gap-2">
-            <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none">
-              <Icon icon="tabler:trending-up" />
-              Telegram
-            </Button>
-            <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none">
-              <Icon icon="tabler:trending-up" />
-              Twitter
-            </Button>
-          </div>
-        </div>
         <h1 className="text-[50px] font-bold text-center pt-10 md:pt-0 leading-none hidden md:block">FOMO 3D</h1>
         <Image src={Logo.src} alt="Logo" width={150} height={150} className="mb-2 md:hidden" />
         <p className="text-center text-xl opacity-70 pb-6 px-4">The future of crypto is here. Get a jump start on the next big token launch.</p>

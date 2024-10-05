@@ -62,7 +62,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
     const pathname = usePathname();
 
     useEffect(() => {
-      // Switch case to check if pathname contains specific routes
+      if (!pathname) return;
       switch (true) {
         case pathname === '/':
           setSelected('watchlist');

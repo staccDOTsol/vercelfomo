@@ -9,6 +9,8 @@ export default function MenuButton({ toggleSidebar }: { toggleSidebar: () => voi
 	const pathName = usePathname();
 
 	const getButtonPosition = () => {
+    if (!pathName) return "top-14 left-4";
+    
 		switch (true) {
 			case /^\/token(\/.*)?$/.test(pathName):
 				return "top-16 left-4";
