@@ -2,8 +2,6 @@
 import "@/styles/globals.css";
 import clsx from "clsx";
 
-import { Jersey_10 } from "next/font/google";
-
 import SidebarContainer from "@/components/sidebar-container";
 
 import { Providers } from "./providers";
@@ -11,13 +9,6 @@ import { Providers } from "./providers";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import MenuButton from "@/components/menu-button";
-
-const jersey = Jersey_10({
-	subsets: ["latin"],
-	weight: ["400"],
-	variable: "--font-jersey",
-	fallback: ["sans-serif"],
-});
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -28,8 +19,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 	return (
 		<html suppressHydrationWarning lang="en">
-			<head />
-			<body className={clsx("min-h-screen bg-background antialiased", jersey.className)}>
+			<head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet" />
+      </head>
+			<body className={clsx("min-h-screen bg-background antialiased jersey-10-regular")}>
 				<Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
 					<div className="h-dvh flex">
 						<motion.div

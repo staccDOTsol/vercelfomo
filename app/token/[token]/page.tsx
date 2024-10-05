@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useRef, useEffect, useState } from "react";
-import Peppa from "@/app/assets/images/peppa.avif";
+import Peppa from "@/app/assets/images/peppa.png";
 import Image from "next/image";
 import { Button, Card, CardBody, Divider, Progress, Tab, Tabs } from "@nextui-org/react";
 import SingleTokenSidebar from "@/components/single-token-sidebar";
