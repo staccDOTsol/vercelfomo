@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.tradingview-widget-container > iframe:nth-child(even) {
+  display: none !important;
+}
