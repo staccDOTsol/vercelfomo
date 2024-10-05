@@ -71,7 +71,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           setSelected('multicharts');
           break;
         default:
-          setSelected('watchlist');
+          setSelected('');
       }
     }, [pathname]);
 
