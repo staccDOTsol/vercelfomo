@@ -18,7 +18,7 @@ export default function NewPairs() {
 	const selectedVolumeFilterValue = useMemo(() => Array.from(selectedVolumeFilterKeys).join(", ").replaceAll("_", " "), [selectedVolumeFilterKeys]);
 	return (
 		<div className="">
-			<div style={{ height: "calc(100vh - 64px)" }} className="flex flex-col w-screen md:w-full pt-11 md:pt-0">
+			<div style={{ height: "calc(100vh - 64px)" }} className="flex flex-col w-screen md:w-full">
 				<div className="w-full overflow-x-auto overflow-y-hidden pb-1 md:pb-0">
 					<Divider className="hidden md:block" />
 					<div className="py-2 px-4 flex gap-2 w-fit border border-t-2 border-white/10">

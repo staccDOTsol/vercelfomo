@@ -28,6 +28,7 @@ export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { tog
         <Button onClick={toggleSidebar} className="absolute top-4 right-4 bg-transparent md:hidden" size="md" isIconOnly aria-label="Close">
           <Icon icon="material-symbols-light:close" width={30} />
         </Button>
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 px-2 w-full justify-center">
             <Link href="/">

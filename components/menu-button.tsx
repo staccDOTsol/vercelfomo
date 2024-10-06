@@ -22,7 +22,7 @@ export default function MenuButton({ toggleSidebar }: { toggleSidebar: () => voi
 	};
 
 	return (
-		<Button onClick={toggleSidebar} className={clsx("absolute left-4 md:hidden z-10", getButtonPosition())} size="md" isIconOnly aria-label="Menu">
+		<Button onClick={toggleSidebar} className={clsx("md:hidden z-10")} size="md" isIconOnly aria-label="Menu">
 			<Icon icon="iconoir:menu" width={20} />
 		</Button>
 	);

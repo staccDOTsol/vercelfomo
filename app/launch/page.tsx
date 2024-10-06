@@ -142,8 +142,8 @@ export default function LaunchPage() {
 				handleSubmit();
 			}}
 		>
-			<div className="pb-10 pt-6">
-				<h1 className="text-3xl font-bold text-center px-4 pt-6 md:pt-4">Launch your token with FOMO3D</h1>
+			<div className="pb-10 pt-0 md:pt-6">
+				<h1 className="text-3xl font-bold text-center px-4 pt-0 md:pt-4">Launch your token with FOMO3D</h1>
 				<p className="text-xl text-center px-4">FOMO3D is a decentralized exchange that allows you to launch your token with ease.</p>
 			</div>
 

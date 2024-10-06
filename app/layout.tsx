@@ -8,7 +8,7 @@ import { Providers } from "./providers";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import MenuButton from "@/components/menu-button";
+
 import { Icon } from "@iconify/react";
 import { Button } from "@nextui-org/react";
 import TopMenu from "@/components/top-menu";
@@ -60,9 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 						</motion.div>
 
 						<div className={`flex flex-col flex-1 md:pl-72 ${isSidebarOpen ? "h-0 overflow-hidden" : ""}`}>
-              <TopMenu />
-
-							<MenuButton toggleSidebar={toggleSidebar} />
+              <TopMenu toggleSidebar={toggleSidebar} />
 
 							{children}
 						</div>
