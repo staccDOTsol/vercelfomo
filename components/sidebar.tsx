@@ -51,7 +51,7 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
 				<Link
 					key={item.key}
 					href={item.href}
-					className={`flex items-center gap-2 text-lg rounded-xl py-1 px-2 ${getActivePage() === item.key ? "bg-primary/50 text-white/100" : "text-white/50"}`}
+					className={`flex items-center gap-2 text-lg rounded-xl py-1 px-2 cursor-pointer hover:bg-primary/50 hover:text-white/100 transition-all duration-300 ease-in-out ${getActivePage() === item.key ? "bg-primary/50 text-white/100" : "text-white/50"}`}
           onClick={() => {
             if (isSidebarOpen && isMobile) {
               toggleSidebar();

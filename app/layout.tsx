@@ -32,11 +32,14 @@ function useIsMobile() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-	const isMobile = useIsMobile(); // Add this line
+	const isMobile = useIsMobile();
 
 	const toggleSidebar = () => {
 		setIsSidebarOpen(!isSidebarOpen);
 	};
+
+  console.log('[[[isSidebarOpen]]]', isSidebarOpen)
+  console.log('[[[isMobile]]]', isMobile)
 
 	return (
 		<html suppressHydrationWarning lang="en">
@@ -56,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							transition={{ type: "spring", stiffness: 300, damping: 30 }}
 							className="fixed top-0 left-0 z-50 h-screen w-72"
 						>
-							<SidebarContainer toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+							<SidebarContainer toggleSidebar={() => toggleSidebar()} isSidebarOpen  />
 						</motion.div>
 
 						<div className={`flex flex-col flex-1 md:pl-72 ${isSidebarOpen ? "h-0 overflow-hidden" : ""}`}>

@@ -24,7 +24,7 @@ const { coins, isLoading, error } = useCoins();
         <p className="text-center text-xl opacity-70 pb-6 px-4">The future of crypto is here. Get a jump start on the next big token launch.</p>
         <div className="flex items-center gap-2 pb-10">
           <Button size="md" color="primary" className="text-lg" aria-label="Get Started">Get Started</Button>
-          <Button size="md" color="secondary" variant="ghost" className="text-lg" aria-label="Lauch Your Own Token">Lauch Your Own Token</Button>
+          <Button size="md" color="secondary" variant="ghost" className="text-lg" aria-label="Lauch Your Own Token" onClick={() => router.push('/launch')}>Lauch Your Own Token</Button>
         </div>
         <Divider />
       </div>
