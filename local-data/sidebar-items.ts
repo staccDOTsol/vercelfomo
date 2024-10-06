@@ -26,7 +26,7 @@ export const sidebarItems: SidebarItem[] = [
 	},
 	{
 		key: "new-pairs",
-		href: "#",
+		href: "/new-pairs",
 		icon: "solar:leaf-bold",
 		title: "New Pairs",
 	},

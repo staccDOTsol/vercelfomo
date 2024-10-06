@@ -24,6 +24,8 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
         return "watchlist"
       case /^\/multi-chart(\/.*)?$/.test(pathName): 
         return "multicharts" 
+      case /^\/new-pairs(\/.*)?$/.test(pathName): 
+        return "new-pairs" 
 			default:
 				return "";
 		}
