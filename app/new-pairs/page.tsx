@@ -18,10 +18,10 @@ export default function NewPairs() {
 	const selectedVolumeFilterValue = useMemo(() => Array.from(selectedVolumeFilterKeys).join(", ").replaceAll("_", " "), [selectedVolumeFilterKeys]);
 	return (
 		<div className="">
-			<div style={{ height: "calc(100vh - 64px)" }} className="flex flex-col">
-				<div>
-					<Divider />
-					<div className="py-2 px-4 flex gap-2">
+			<div style={{ height: "calc(100vh - 64px)" }} className="flex flex-col w-screen md:w-full pt-11 md:pt-0">
+				<div className="w-full overflow-x-auto overflow-y-hidden pb-1 md:pb-0">
+					<Divider className="hidden md:block" />
+					<div className="py-2 px-4 flex gap-2 w-fit border border-t-2 border-white/10">
 						<Dropdown>
 							<DropdownTrigger>
 								<Button
@@ -231,7 +231,7 @@ export default function NewPairs() {
 					isStriped
 					isHeaderSticky
 					classNames={{
-						base: "h-full overflow-scroll rounded-none",
+						base: "h-full overflow-scroll rounded-none max-w-screen",
 						wrapper: "rounded-none p-0",
 						th: "bg-[#0a0a0b] !rounded-none",
 						tr: "!rounded-none",
