@@ -28,22 +28,22 @@ export default function SlippageInput() {
 				/>
 
 				<div className="bg-white/10 grid grid-cols-6 gap-0">
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("5")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("5")} aria-label="5%">
 						5%
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("10")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("10")} aria-label="10%">
 						10%
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("15")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("15")} aria-label="15%">
 						15%
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("20")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("20")} aria-label="20%">
 						20%
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("25")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("25")} aria-label="25%">
 						25%
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("50")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("50")} aria-label="50%">
 						50%
 					</Button>
 				</div>

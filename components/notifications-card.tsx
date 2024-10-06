@@ -133,7 +133,7 @@ export default function Component(props: CardProps) {
               12
             </Chip>
           </div>
-          <Button className="h-8 px-3" color="primary" radius="full" variant="light">
+          <Button className="h-8 px-3" color="primary" radius="full" variant="light" aria-label="Mark all as read">
             Mark all as read
           </Button>
         </div>
@@ -190,10 +190,10 @@ export default function Component(props: CardProps) {
         </ScrollShadow>
       </CardBody>
       <CardFooter className="justify-end gap-2 px-4">
-        <Button variant={activeTab === NotificationTabs.Archive ? "flat" : "light"}>
+        <Button variant={activeTab === NotificationTabs.Archive ? "flat" : "light"} aria-label="Settings">
           Settings
         </Button>
-        {activeTab !== NotificationTabs.Archive && <Button variant="flat">Archive All</Button>}
+        {activeTab !== NotificationTabs.Archive && <Button variant="flat" aria-label="Archive All">Archive All</Button>}
       </CardFooter>
     </Card>
   );

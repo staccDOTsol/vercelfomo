@@ -24,7 +24,7 @@ export default function SingleTokenSidebar({
 		<>
       <div className="flex justify-between items-center p-3">
         <div className="text-xl">@PEPPA / SOL</div>
-        <Button isIconOnly className="bg-white/10" size="sm" onClick={() => router.back()}>
+        <Button isIconOnly className="bg-white/10" size="sm" onClick={() => router.back()} aria-label="Close">
           <Icon icon="material-symbols-light:close" />
         </Button>
       </div>
@@ -75,6 +75,7 @@ export default function SingleTokenSidebar({
                   className="bg-primary text-white rounded-full text-lg"
                   startContent={<Icon icon="tabler:wallet" />}
                   fullWidth
+                  aria-label="Connect Wallet"
                 >
                   Connect Wallet
                 </Button>

@@ -54,12 +54,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							initial={{ x: "-100%" }}
 							animate={{ x: isMobile ? (isSidebarOpen ? 0 : "-100%") : 0 }}
 							transition={{ type: "spring", stiffness: 300, damping: 30 }}
-							className="fixed top-0 left-0 z-20 h-screen w-72"
+							className="fixed top-0 left-0 z-50 h-screen w-72"
 						>
 							<SidebarContainer toggleSidebar={toggleSidebar} />
 						</motion.div>
 
-						<div className="flex flex-col flex-1 md:pl-72">
+						<div className={`flex flex-col flex-1 md:pl-72 ${isSidebarOpen ? "h-0 overflow-hidden" : ""}`}>
               <TopMenu />
 
 							<MenuButton toggleSidebar={toggleSidebar} />

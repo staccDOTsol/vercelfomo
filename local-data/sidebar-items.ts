@@ -1,4 +1,9 @@
-import { SidebarItem } from "@/components/sidebar";
+interface SidebarItem {
+  key: string;
+  href: string;
+  icon: string;
+  title: string;
+}
 
 export const sidebarItems: SidebarItem[] = [
 	{

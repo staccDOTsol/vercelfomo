@@ -29,22 +29,22 @@ export default function AmountInput() {
 				/>
 
 				<div className="bg-white/10 grid grid-cols-6 gap-0">
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("0.01")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("0.01")} aria-label="0.01">
 						0.01
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("0.25")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("0.25")} aria-label="0.25">
 						0.25
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("0.5")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("0.5")} aria-label="0.5">
 						0.5
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("1")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("1")} aria-label="1">
 						1
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("2")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("2")} aria-label="2">
 						2
 					</Button>
-					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("5")}>
+					<Button size="sm" className="bg-transparent text-md hover:bg-white/10" onClick={() => handleButtonClick("5")} aria-label="5">
 						5
 					</Button>
 				</div>

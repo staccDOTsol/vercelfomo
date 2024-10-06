@@ -23,7 +23,7 @@ export default function TvChartsHolder({ charts, removeChart, addChart }: { char
 						<div className="w-full flex justify-end items-center">
 							<Popover placement="bottom-end" showArrow offset={10} isOpen={isAddChartOpen} onOpenChange={(open) => setIsAddChartOpen(open)} backdrop="blur">
 								<PopoverTrigger>
-									<Button size="sm" className="text-md" color="primary">
+									<Button size="sm" className="text-md" color="primary" aria-label="Add Chart">
 										Add Chart
 									</Button>
 								</PopoverTrigger>
@@ -48,7 +48,7 @@ export default function TvChartsHolder({ charts, removeChart, addChart }: { char
                             input: "inter"
                           }}
                         />
-                        <Button color="primary" onClick={() => handleAddChart()} className="text-xl">Add</Button>
+                        <Button color="primary" onClick={() => handleAddChart()} className="text-xl" aria-label="Add">Add</Button>
 											</div>
 										</div>
 									)}

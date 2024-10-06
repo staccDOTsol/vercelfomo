@@ -116,7 +116,7 @@ export default function Swap() {
               </CardBody>
             </Card>
 
-            <Button isIconOnly className="w-10 h-10 -mt-6 -mb-6 z-10 bg-[#0d0d0e] border-[3px] border-[#18181b]">
+            <Button isIconOnly className="w-10 h-10 -mt-6 -mb-6 z-10 bg-[#0d0d0e] border-[3px] border-[#18181b]" aria-label="Swap">
               <Icon icon="iconamoon:swap-bold" />
             </Button>
 
@@ -185,7 +185,7 @@ export default function Swap() {
           </div>
 				</CardBody>
 				<CardFooter className="px-6">
-					<Button color="primary" fullWidth size="lg">
+					<Button color="primary" fullWidth size="lg" aria-label="Swap">
 						Swap
 					</Button>
 				</CardFooter>

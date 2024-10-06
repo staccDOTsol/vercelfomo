@@ -50,16 +50,16 @@ export default function TvChart({ symbol, removeChart }: { symbol: string; remov
   }, [symbol]);
 
   return (
-    <div className="overflow-hidden h-[400px] flex flex-col">
+    <div className="overflow-hidden h-[400px] flex flex-col z-10">
       <div
         id={`tradingview_${symbol.replace(":", "_")}`}
         ref={containerRef}
-        className="tradingview-widget-container single-chart"
+        className="tradingview-widget-container single-chart overflow-hidden"
         style={{ height: "calc(100% - 40px)" }}
       />
       <div className="bg-zinc-800/20 p-2 rounded-b-md">
         <div className="flex items-center justify-between">
-          <Button isIconOnly size="sm" variant="flat" onClick={removeChart}>
+          <Button isIconOnly size="sm" variant="flat" onClick={removeChart} aria-label="Remove Chart">
             <Icon icon="mdi:trash" className="text-white/20" fontSize={18} />
           </Button>
           <span className="text-white/20 text-xl">{symbol}</span>

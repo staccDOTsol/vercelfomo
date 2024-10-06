@@ -28,10 +28,10 @@ const NotificationItem = React.forwardRef<HTMLDivElement, NotificationItemProps>
       default: null,
       request: (
         <div className="flex gap-2 pt-2">
-          <Button color="primary" size="sm">
+          <Button color="primary" size="sm" aria-label="Accept">
             Accept
           </Button>
-          <Button size="sm" variant="flat">
+          <Button size="sm" variant="flat" aria-label="Decline">
             Decline
           </Button>
         </div>
