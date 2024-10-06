@@ -56,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							transition={{ type: "spring", stiffness: 300, damping: 30 }}
 							className="fixed top-0 left-0 z-50 h-screen w-72"
 						>
-							<SidebarContainer toggleSidebar={toggleSidebar} />
+							<SidebarContainer toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 						</motion.div>
 
 						<div className={`flex flex-col flex-1 md:pl-72 ${isSidebarOpen ? "h-0 overflow-hidden" : ""}`}>

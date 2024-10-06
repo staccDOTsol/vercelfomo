@@ -11,7 +11,7 @@ interface SidebarItem {
   title: string;
 }
 
-export default function Sidebar({ defaultSelectedKey, items, toggleSidebar }: { defaultSelectedKey: string; items: SidebarItem[]; toggleSidebar: () => void }) {
+export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSidebarOpen: boolean; items: SidebarItem[]; toggleSidebar: () => void }) {
 	const [activePage, setActivePage] = useState("");
 
   const pathName = usePathname();
@@ -29,6 +29,21 @@ export default function Sidebar({ defaultSelectedKey, items, toggleSidebar }: { 
 		}
   }
 
+	const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+	useEffect(() => {
+		const handleResize = () => {
+			setActivePage(getActivePage());
+		};
+
+		handleResize();
+		window.addEventListener('resize', handleResize);
+
+		return () => {
+			window.removeEventListener('resize', handleResize);
+		};
+	}, [pathName]);
+
 
 	return (
 		<div className="flex flex-col gap-2 px-2 z-50">
@@ -38,7 +53,9 @@ export default function Sidebar({ defaultSelectedKey, items, toggleSidebar }: { 
 					href={item.href}
 					className={`flex items-center gap-2 text-lg rounded-xl py-1 px-2 ${getActivePage() === item.key ? "bg-primary/50 text-white/100" : "text-white/50"}`}
           onClick={() => {
-            toggleSidebar();
+            if (isSidebarOpen && isMobile) {
+              toggleSidebar();
+            }
           }}
 				>
 					<Icon icon={item.icon} width={20} />

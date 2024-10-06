@@ -20,7 +20,7 @@ const user = {
   avatar: "https://i.pravatar.cc/150?img=3",
 }
 
-export default function SidebarContainer({ toggleSidebar }: { toggleSidebar: () => void }) {
+export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { toggleSidebar: () => void, isSidebarOpen: boolean }) {
 
 	return (
     <>
@@ -52,7 +52,7 @@ export default function SidebarContainer({ toggleSidebar }: { toggleSidebar: () 
 
         <ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
           <Sidebar
-            defaultSelectedKey="watchlist"
+            isSidebarOpen={isSidebarOpen}
             items={sidebarItems}
             toggleSidebar={toggleSidebar}
           />
