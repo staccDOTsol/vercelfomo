@@ -7,12 +7,10 @@ import { useDropzone } from "react-dropzone";
 import { useForm, useField, Updater } from "@tanstack/react-form";
 
 // Images
-import MeteoraLogo from "@/app/assets/images/meteora.webp";
 import RaydiumLogo from "@/app/assets/images/raydium.webp";
 import GobblerLogo from "@/app/assets/images/gobbler.png";
 import { Icon } from "@iconify/react";
 import DexOption from "@/components/dex-option";
-import { subscribe } from "diagnostics_channel";
 
 function IconDropZone({ onFileChange }: { onFileChange: (file: File) => void }) {
 	const [iconFile, setIconFile] = useState<File | null>(null);
@@ -184,31 +182,37 @@ export default function LaunchPage() {
 					<Popover placement="right" showArrow={true} backdrop="blur" size="lg">
 						<PopoverTrigger>
 							<Button size="sm">
-                <Icon icon="ph:gear" className="text-lg" />
-                <span className="text-md inter">Fee Option</span>
+								<Icon icon="ph:gear" className="text-lg" />
+								<span className="text-md inter">Fee Option</span>
 							</Button>
 						</PopoverTrigger>
 						<PopoverContent className="w-full md:w-[400px] items-start justify-start py-4 px-6">
 							<div className="h-full w-full flex flex-col flex-1">
 								<div className="text-2xl font-bold pb-3">Fee Settings</div>
-                <Divider />
+								<Divider />
 								<div className="text-sm inter pt-4">Some cool text to go here to explain the fee settings. I dont know much about it so im just putting random content.</div>
-                
-                <div className="w-full my-4">
-                  <Select
-                    label="Fee Type"
-                    classNames={{
-                      label: "text-xs inter font-bold",
-                      value: "text-sm inter",
-                      listbox: "text-sm inter",
-                    }}
-                  >
-                    <SelectItem key="fixed" value="fixed">Fixed</SelectItem>
-                    <SelectItem key="percentage" value="percentage">Percentage</SelectItem>
-                  </Select>
-                </div>
 
-                <Button fullWidth color="primary" className="text-xl mt-auto">Update</Button>
+								<div className="w-full my-4">
+									<Select
+										label="Fee Type"
+										classNames={{
+											label: "text-xs inter font-bold",
+											value: "text-sm inter",
+											listbox: "text-sm inter",
+										}}
+									>
+										<SelectItem key="fixed" value="fixed">
+											Fixed
+										</SelectItem>
+										<SelectItem key="percentage" value="percentage">
+											Percentage
+										</SelectItem>
+									</Select>
+								</div>
+
+								<Button fullWidth color="primary" className="text-xl mt-auto">
+									Update
+								</Button>
 							</div>
 						</PopoverContent>
 					</Popover>
@@ -217,47 +221,62 @@ export default function LaunchPage() {
 				<div className="flex flex-col gap-4">
 					<Field
 						name="tokenSymbol"
+						validators={{
+							onSubmit: ({ value }) => (!value ? "Token symbol is required" : undefined),
+						}}
 						children={({ state, handleChange, handleBlur }) => (
 							<Input
 								label="Token Symbol"
 								fullWidth
-								classNames={{ input: "text-lg", label: "text-lg" }}
+								classNames={{ input: "text-lg", label: "text-lg", errorMessage: "text-md" }}
 								defaultValue={state.value}
 								size="lg"
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
+								errorMessage={state.meta.errors.join(",")}
+								isInvalid={state.meta.errors.length > 0}
 								onBlur={handleBlur}
 							/>
 						)}
 					/>
 					<Field
 						name="tokenName"
+						validators={{
+							onSubmit: ({ value }) => (!value ? "Token name is required" : undefined),
+						}}
 						children={({ state, handleChange, handleBlur }) => (
 							<Input
 								label="Token Name"
 								fullWidth
-								classNames={{ input: "text-lg", label: "text-lg" }}
+								classNames={{ input: "text-lg", label: "text-lg", errorMessage: "text-md" }}
 								defaultValue={state.value}
 								size="lg"
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
+                errorMessage={state.meta.errors.join(",")}
+								isInvalid={state.meta.errors.length > 0}
 								onBlur={handleBlur}
 							/>
 						)}
 					/>
 					<Field
 						name="description"
+						validators={{
+							onSubmit: ({ value }) => (!value ? "Description is required" : undefined),
+						}}
 						children={({ state, handleChange, handleBlur }) => (
 							<Textarea
 								label="Description"
 								fullWidth
-								classNames={{ input: "text-lg", label: "text-lg" }}
+								classNames={{ input: "text-lg", label: "text-lg", errorMessage: "text-md" }}
 								defaultValue={state.value}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
 								size="lg"
+                errorMessage={state.meta.errors.join(",")}
+								isInvalid={state.meta.errors.length > 0}
 								onBlur={handleBlur}
 							/>
 						)}
 					/>
-					<div className="grid grid-cols-1 md:grid-cols-4 grid-0 gap-y-4 -mt-0 md:-mt-2">
+					<div className="grid grid-cols-1 md:grid-cols-4 grid-0 gap-y-4 md:gap-4 -mt-0 md:-mt-2">
 						<Field name="icon" children={({ state, handleChange, handleBlur }) => <IconDropZone onFileChange={(image: any) => handleChange(image)} />} />
 
 						<Field name="banner" children={({ state, handleChange, handleBlur }) => <BannerDropZone onFileChange={(image: any) => handleChange(image)} />} />
