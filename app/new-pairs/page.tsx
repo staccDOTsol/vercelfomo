@@ -21,7 +21,7 @@ export default function NewPairs() {
 			<div style={{ height: "calc(100vh - 64px)" }} className="flex flex-col w-screen md:w-full">
 				<div className="w-full overflow-x-auto overflow-y-hidden pb-1 md:pb-0">
 					<Divider className="hidden md:block" />
-					<div className="py-2 px-4 flex gap-2 w-fit border border-t-2 border-white/10">
+					<div className="py-2 px-4 flex gap-2 w-fit md:w-full border border-t-2 md:border-0 border-white/10">
 						<Dropdown>
 							<DropdownTrigger>
 								<Button

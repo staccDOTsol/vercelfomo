@@ -22,7 +22,7 @@ export default function MenuButton({ toggleSidebar }: { toggleSidebar: () => voi
 	};
 
 	return (
-		<Button onClick={toggleSidebar} className={clsx("md:hidden z-10")} size="md" isIconOnly aria-label="Menu">
+		<Button onClick={toggleSidebar} className="md:hidden z-10 bg-white/10" size="md" isIconOnly aria-label="Menu">
 			<Icon icon="iconoir:menu" width={20} />
 		</Button>
 	);

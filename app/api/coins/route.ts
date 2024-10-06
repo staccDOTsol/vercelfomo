@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 
 const randomImages = [
-  "https://i.kym-cdn.com/entries/icons/original/000/037/088/bmw_z4_by_scorpion87_dunxpb-fullview.jpg",
-  "https://i.kym-cdn.com/editorials/icons/mobile/000/004/844/wise_mystical_tree_lore.jpg",
-  "https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fphotos%2Fimages%2Fnewsfeed%2F002%2F232%2F140%2F791.jpg",
-  "https://preview.redd.it/jf5ql9wfy0381.jpg?auto=webp&s=ad7c6e418996268428ded2ede07ddfa425591f8b",
-  "https://i.imgur.com/fST1EXz.jpg",
-  "https://i.pinimg.com/474x/72/72/0b/72720baaa9e47c3f29c1285592ee2835--secret-meme-spongebob.jpg",
-  "https://i.kym-cdn.com/photos/images/original/002/300/052/66d"
+  "https://cdn.dexscreener.com/cms/images/0tZZqAG6HlWujfGI?width=160&height=160&fit=crop&quality=95&format=auto",
+  "https://cdn.dexscreener.com/cms/images/1guEcvKhme-YNIdN?width=160&height=160&fit=crop&quality=95&format=auto",
+  "https://cdn.dexscreener.com/cms/images/IDpdes8WFkjzbs3U?width=160&height=160&fit=crop&quality=95&format=auto",
+  "https://cdn.dexscreener.com/cms/images/UlnqZA7xlUwgTN3T?width=160&height=160&fit=crop&quality=95&format=auto",
+  "https://cdn.dexscreener.com/cms/images/rju4lVYLH_Kvw5Pb?width=160&height=160&fit=crop&quality=95&format=auto",
+  "https://cdn.dexscreener.com/cms/images/MetlE3bcCvmL4mOu?width=160&height=160&fit=crop&quality=95&format=auto",
+  "https://cdn.dexscreener.com/cms/images/am2kxHelmFSgrpnA?width=160&height=160&fit=crop&quality=95&format=auto"
 ];
 
 const mockData = Array.from({ length: 20 }, (_, index) => ({

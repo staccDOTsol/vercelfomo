@@ -59,8 +59,8 @@ export default function TokenPage() {
 	}));
 
 	return (
-		<div className="grid grid-cols-12 pt-14 md:pt-0" style={{ height: "calc(100vh - 60px)" }}>
-			<div className="flex flex-col col-span-12 md:col-span-9">
+		<div className="grid grid-cols-12" style={{ height: "calc(100vh - 60px)" }}>
+			<div className="flex flex-col col-span-12 md:col-span-9 order-2 md:order-1">
 				<div className="flex-1">
 					<div className="hidden md:block tradingview-widget-container w-full h-screen single-chart overflow-hidden" ref={container}>
 						<div className="tradingview-widget-container__widget flex-1" style={{ height: "60%", width: "100%" }}></div>
@@ -110,7 +110,7 @@ export default function TokenPage() {
 					</div>
 				</div>
 			</div>
-			<div className="col-span-12 md:col-span-3">
+			<div className="col-span-12 md:col-span-3 border-t-2 md:border-0 border-white/10">
 				<SingleTokenSidebar token={demoToken} />
 			</div>
 		</div>

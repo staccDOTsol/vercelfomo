@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 
 export default function ItemFilterBar() {
 	return (
-		<Tabs aria-label="Options" color="secondary" variant="bordered" classNames={{ base: "w-full md:w-fit", tabList: "w-full md:w-fit" }}>
+		<Tabs aria-label="Options" color="primary" variant="bordered" classNames={{ base: "w-full md:w-fit", tabList: "w-full md:w-fit" }}>
 			<Tab
 				key="trending"
 				title={
