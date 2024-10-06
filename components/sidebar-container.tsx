@@ -1,5 +1,5 @@
 "use client";
-import { Image } from "@nextui-org/react";
+import { Image, Link } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 import Sidebar from "@/components/sidebar";
 import Logo from "@/app/assets/images/logo_color.svg";
@@ -30,7 +30,9 @@ export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { tog
         </Button>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 px-2 w-full justify-center">
-            <Image src={Logo.src} alt="Logo" width={150} height={150} />
+            <Link href="/">
+              <Image src={Logo.src} alt="Logo" width={150} height={150} />
+            </Link>
           </div>
         </div>
 

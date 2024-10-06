@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import SidebarStats from "@/components/sidebar-stats";
 import SlippageInput from "@/components/slippage-input";
 import AmountInput from "@/components/amount-input";
+
 export default function SingleTokenSidebar({
 	token,
 }: {

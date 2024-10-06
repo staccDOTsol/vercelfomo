@@ -38,9 +38,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		setIsSidebarOpen(!isSidebarOpen);
 	};
 
-  console.log('[[[isSidebarOpen]]]', isSidebarOpen)
-  console.log('[[[isMobile]]]', isMobile)
-
 	return (
 		<html suppressHydrationWarning lang="en">
 			<head>
