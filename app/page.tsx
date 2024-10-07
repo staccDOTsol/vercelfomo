@@ -11,12 +11,11 @@ import Logo from "@/app/assets/images/logo_color.svg";
 
 export default function Home() {
   const router = useRouter()
-const { coins, isLoading, error } = useCoins();
+  const { coins, isLoading, error } = useCoins();
+  if (isLoading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  if (error) return <div className="flex items-center justify-center h-screen">Error: {error.message}</div>;
 
-	if (isLoading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
-	if (error) return <div className="flex items-center justify-center h-screen">Error: {error.message}</div>;
-
-	return (
+  return (
     <div>
       <div className="flex flex-col items-center justify-center">
         <h1 className="text-[50px] font-bold text-center pt-10 md:pt-0 leading-none hidden md:block">FOMO 3D</h1>
@@ -94,5 +93,5 @@ const { coins, isLoading, error } = useCoins();
         </div>
       </section>
     </div>
-	);
+  );
 }

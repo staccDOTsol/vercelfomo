@@ -6,7 +6,8 @@ export default function useCoins() {
 		if (!response.ok) {
 			throw new Error("Network response was not ok");
 		}
-		return response.json();
+		const data = await response.json();
+		return data.filter((coin:any) => coin.image !== "https://via.assets.so/img.jpg?w=400&h=150&tc=blue&bg=#000000&t=");
 	};
 
 	const {
