@@ -3,8 +3,8 @@
 import { useParams } from "next/navigation";
 import { useRef, useEffect, useState } from "react";
 import Peppa from "@/app/assets/images/peppa.png";
-import Image from "next/image";
-import { Button, Card, CardBody, Divider, Progress, Tab, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Tabs } from "@nextui-org/react";
+import useActivity from "@/app/hooks/useActivty";
+import { Button, Card, CardBody, Divider, Progress, Spinner, Tab, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Tabs } from "@nextui-org/react";
 import SingleTokenSidebar from "@/components/single-token-sidebar";
 import { Icon } from "@iconify/react";
 
@@ -48,19 +48,11 @@ export default function TokenPage() {
 		image: Peppa.src,
 	};
 
-	const tableData = Array.from({ length: 100 }).map(() => ({
-		timeAgo: `${Math.floor(Math.random() * 60) + 1}m ago`,
-		type: Math.random() > 0.5 ? 'Buy' : 'Sell',
-		usd: (Math.random() * 10).toFixed(2),
-		fomo3dFun: (Math.random() * 1000).toFixed(2),
-		sol: (Math.random() * 0.1).toFixed(5),
-		price: (Math.random() * 0.1).toFixed(5),
-		maker: Math.random().toString(36).substring(2, 8),
-	}));
+  const { activity, isLoading, error } = useActivity();
 
 	return (
 		<div className="grid grid-cols-12" style={{ height: "calc(100vh - 60px)" }}>
-			<div className="flex flex-col col-span-12 md:col-span-9 order-2 md:order-1">
+			<div className="flex flex-col col-span-12 md:col-span-9 order-2 md:order-first">
 				<div className="flex-1">
 					<div className="hidden md:block tradingview-widget-container w-full h-screen single-chart overflow-hidden" ref={container}>
 						<div className="tradingview-widget-container__widget flex-1" style={{ height: "60%", width: "100%" }}></div>
@@ -88,8 +80,8 @@ export default function TokenPage() {
 								<TableColumn className="text-md text-white">TXN</TableColumn>
 							</TableHeader>
 
-							<TableBody>
-								{tableData.map((row, index) => (
+							<TableBody isLoading={isLoading} emptyContent={"No activity found"} loadingContent={<Spinner />} className="p-10">
+								{activity && activity.data.map((row: any, index: any) => ( // Not sure what the actual data was so used any for now
 									<TableRow key={index + 2}>
 										<TableCell className="text-white/50 text-md">{row.timeAgo}</TableCell>
 										<TableCell className={`text-md ${row.type === 'Buy' ? 'text-success' : 'text-danger'}`}>{row.type}</TableCell>

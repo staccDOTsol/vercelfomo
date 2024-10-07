@@ -28,7 +28,7 @@ export default function DexOption({
 				<h2 className="text-xl">{name}</h2>
 			</div>
 			<p className="inter text-xs text-center">
-				{description} <Link href={learnMoreLink} target="_blank" className="text-primary underline font-bold cursor-pointer">Learn more</Link>
+				{description} {learnMoreLink && <Link href={learnMoreLink} target="_blank" className="text-primary underline font-bold cursor-pointer">Learn more</Link>}
 			</p>
 		</div>
 	);

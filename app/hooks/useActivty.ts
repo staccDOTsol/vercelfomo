@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
 export default function usePairs() {
-	const fetchPairs = async () => {
-		const response = await fetch("/api/pairs/new");
+	const fetchActivity = async () => {
+		const response = await fetch("/api/activity");
 		if (!response.ok) {
 			throw new Error("Network response was not ok");
 		}
@@ -10,17 +10,17 @@ export default function usePairs() {
 	};
 
 	const {
-		data: pairs,
+		data: activity,
 		isLoading,
 		error,
 	} = useQuery({
-		queryKey: ["pairs"],
-		queryFn: fetchPairs,
+		queryKey: ["activity"],
+		queryFn: fetchActivity,
 		staleTime: 250000,
 	});
 
 	return {
-		pairs,
+		activity,
 		isLoading,
 		error,
 	};

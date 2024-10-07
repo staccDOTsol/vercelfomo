@@ -57,11 +57,13 @@ const { coins, isLoading, error } = useCoins();
                 <div className="flex items-center gap-4">
                   <Image
                     unoptimized
-                    src={coin.image}
+                    src={coin.image || "https://via.assets.so/img.jpg?w=400&h=150&tc=blue&bg=#000000&t="}
                     width={70}
                     height={70}
                     alt="avatar"
                     className="rounded-lg aspect-square object-cover"
+                    placeholder="blur"
+                    blurDataURL={"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=="}
                   />
                   <div className="flex flex-col gap-0">
                     <h2 className="text-xl font-bold leading-none">

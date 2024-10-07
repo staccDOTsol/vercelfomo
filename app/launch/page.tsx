@@ -170,8 +170,8 @@ export default function LaunchPage() {
 									setSelectedDex={() => handleChange("raydium")}
 									logo={RaydiumLogo.src}
 									name="Raydium"
-									description="Earn LB rewards for life! 20% for created (that's you) and 70% fr top 50 holders"
-									learnMoreLink="https://raydium.io"
+									description=""
+									learnMoreLink=""
 								/>
 							</>
 						)}
