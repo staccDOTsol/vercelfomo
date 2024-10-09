@@ -18,9 +18,10 @@ import {
 import { BN } from 'bn.js';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 
-const HELIUS_API_KEY = '0d4b4fd6-c2fc-4f55-b615-a23bab1ffc85';
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
+const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
+
 const HELIUS_API_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-const BIRDEYE_API_KEY = '76e4f97ddfa74b42b3e757721f231279';
 const BIRDEYE_BASE_URL = 'https://public-api.birdeye.so/defi';
 const PROGRAM_IDS = ['65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9', 'Ei1CgRq6SMB8wQScEKeRMGYkyb3YmRTaej1hpHcqAV9r']
 const cache = new Map();
@@ -415,7 +416,7 @@ async function generatePairs(count: number) {
     const metadata = {...metadataResult?.content,...metadataResult.content.metadata};
     const birdeyeData = birdeyeResult;
     console.log(metadata)
-    const age = await calculateAgeAndTxCount(connection, relevantMint);
+    // const age = await calculateAgeAndTxCount(connection, relevantMint);
     return {
       id: relevantMint.toBase58(),
       image: metadata?.image || birdeyeData?.logoURI || "https://via.assets.so/img.jpg?w=400&h=150&tc=blue&bg=#000000&t=",
@@ -428,8 +429,8 @@ async function generatePairs(count: number) {
       twitter: metadata?.links?.twitter || "https://twitter.com",
       telegram: metadata?.links?.telegram || "https://t.me",
       website: metadata?.links?.website || "https://example.com",
-      age: age.age,
-      txCount: age.txCount
+      // age: age.age,
+      // txCount: age.txCount
     };
   }));
 
@@ -438,7 +439,7 @@ async function generatePairs(count: number) {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const count = parseInt(searchParams.get('count') || '200', 10);
+  const count = parseInt(searchParams.get('count') || '10', 10);
   const pairs = await generatePairs(count);
 
   // Convert BigInt values to strings before JSON serialization

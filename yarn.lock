@@ -2907,6 +2907,21 @@
   resolved "https://registry.yarnpkg.com/@tanstack/query-devtools/-/query-devtools-5.58.0.tgz#5c68ce90562e154004de4372bc0a28fcd94cdf31"
   integrity sha512-iFdQEFXaYYxqgrv63ots+65FGI+tNp5ZS5PdMU1DWisxk3fez5HG3FyVlbUva+RdYS5hSLbxZ9aw3yEs97GNTw==
 
+"@tanstack/query-persist-client-core@5.59.0":
+  version "5.59.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-persist-client-core/-/query-persist-client-core-5.59.0.tgz#a896386edde3531fec8c0a29aeae9f4ac4681f4c"
+  integrity sha512-uGXnTgck1AX2xXDVj417vtQD4Sz3J1D5iPxVhfUc7f/fkY9Qad2X7Id9mZUtll1/m9z55DfHoXMXlx5H1JK6fQ==
+  dependencies:
+    "@tanstack/query-core" "5.59.0"
+
+"@tanstack/query-sync-storage-persister@^5.59.0":
+  version "5.59.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-sync-storage-persister/-/query-sync-storage-persister-5.59.0.tgz#e3d66a36c25de94b89e563b4b669796fd36b19ae"
+  integrity sha512-PBQ6Chg/rgRQuQcTaFV/GiCDZdzZvbODKrpti+0fOPjKipEtodGRqtvYsPlf1Y7yb4AbZTECAKUQFjCv/gZVaA==
+  dependencies:
+    "@tanstack/query-core" "5.59.0"
+    "@tanstack/query-persist-client-core" "5.59.0"
+
 "@tanstack/react-form@^0.33.0":
   version "0.33.0"
   resolved "https://registry.yarnpkg.com/@tanstack/react-form/-/react-form-0.33.0.tgz#97a0e6a3aa22a01b076f1172620687bb6ffa793e"
@@ -2923,6 +2938,13 @@
   integrity sha512-Kz7577FQGU8qmJxROIT/aOwmkTcxfBqgTP6r1AIvuJxVMVHPkp8eQxWQ7BnfBsy/KTJHiV9vMtRVo1+R1tB3vg==
   dependencies:
     "@tanstack/query-devtools" "5.58.0"
+
+"@tanstack/react-query-persist-client@^5.59.0":
+  version "5.59.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query-persist-client/-/react-query-persist-client-5.59.0.tgz#a73bfaf49fdc8d2502c6dc7661e2eb6ad9beeb8f"
+  integrity sha512-pUZxMXyy8Atv0rKzbRuCjC2wkQ6uTnKqlKtZ7djwv8r89tF1O5+p4DRCpMzQ+8w/qPRo9yMu/nDgGPcEZ1Fr8Q==
+  dependencies:
+    "@tanstack/query-persist-client-core" "5.59.0"
 
 "@tanstack/react-query@^5.59.0":
   version "5.59.0"
@@ -5962,16 +5984,8 @@ streamsearch@^1.1.0:
   resolved "https://registry.yarnpkg.com/streamsearch/-/streamsearch-1.1.0.tgz#404dd1e2247ca94af554e841a8ef0eaa238da764"
   integrity sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==
 
-"string-width-cjs@npm:string-width@^4.2.0":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
-  integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
-  dependencies:
-    emoji-regex "^8.0.0"
-    is-fullwidth-code-point "^3.0.0"
-    strip-ansi "^6.0.1"
-
-string-width@^4.1.0:
+"string-width-cjs@npm:string-width@^4.2.0", string-width@^4.1.0:
+  name string-width-cjs
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -6051,14 +6065,7 @@ string.prototype.trimstart@^1.0.8:
     define-properties "^1.2.1"
     es-object-atoms "^1.0.0"
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
-  integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
-  dependencies:
-    ansi-regex "^5.0.1"
-
-strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
