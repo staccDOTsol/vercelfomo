@@ -40,10 +40,12 @@ async function fetchTokenMetadata(mintAddresses: string[]) {
 
     let finalResult;
 
-    if (cachedResponse) {
+    // @ts-ignore
+    if (cachedResponse?.result) {
       console.log('Returning cached response', cachedResponse);
       // set result as cachedResponse
-      finalResult = cachedResponse;
+      // @ts-ignore
+      finalResult = cachedResponse.result;
     } else {
       const response = await fetchWithRetry(HELIUS_API_URL, {
         method: 'POST',
@@ -105,14 +107,28 @@ async function fetchBirdeyeData(tokenAddresses: string[]) {
   try {
     const fetchPromises = tokenAddresses.map(async (address) => {
       try {
-        const response = await fetchWithRetry(`${BIRDEYE_BASE_URL}/token_overview?address=${address}`, options);
-        const jsonData = await response;
-        if (!jsonData.success) {
-          console.error(`Birdeye API returned unsuccessful response for address: ${address}`);
-          return null;
+        const cacheKey = `birdeye:${address}`;
+        const cachedResponse = await kv.get(cacheKey);
+
+        let finalResult;
+
+        if (cachedResponse) {
+          console.log('Returning cached response for BIRDEYE', cachedResponse);
+          finalResult = cachedResponse;
         } else {
-          return jsonData.data;
+          const response = await fetchWithRetry(`${BIRDEYE_BASE_URL}/token_overview?address=${address}`, options);
+          const jsonData = await response;
+          if (!jsonData.success) {
+            console.error(`Birdeye API returned unsuccessful response for address: ${address}`);
+            return null;
+          } else {
+            finalResult = jsonData.data;
+          }
         }
+
+        await kv.set(cacheKey, JSON.stringify(finalResult), { ex: 3600 });
+
+        return finalResult;
       } catch (error) {
         console.error(`Error fetching or parsing data for address: ${address}`, error);
         return null;
