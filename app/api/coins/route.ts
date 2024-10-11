@@ -14,24 +14,11 @@ const BIRDEYE_BASE_URL = 'https://public-api.birdeye.so/defi';
 const PROGRAM_IDS = ['65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9', 'Ei1CgRq6SMB8wQScEKeRMGYkyb3YmRTaej1hpHcqAV9r'];
 
 async function fetchWithRetry(url: string, options: any, retries = 5, backoff = 300) {
-  // Check if the response is already cached
-  const cacheKey = `fetch:${url}:${JSON.stringify(options)}`;
-  const cachedResponse = await kv.get(cacheKey);
-  if (cachedResponse) {
-    console.log('Returning cached response');
-    return JSON.parse(cachedResponse as string);
-  }
-
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
       if (response.status !== 429) {
-        const jsonResponse = await response.json();
-        
-        // Cache the response
-        await kv.set(cacheKey, JSON.stringify(jsonResponse), { ex: 3600 }); // Cache for 1 hour
-
-        return jsonResponse;
+        return await response.json();
       }
       console.log(`Rate limited. Retrying in ${backoff}ms...`);
     } catch (error) {
@@ -48,22 +35,39 @@ async function fetchTokenMetadata(mintAddresses: string[]) {
     const randomDelay = Math.floor(Math.random() * 1000) + 500; // Random delay between 500-1500ms
     await new Promise(resolve => setTimeout(resolve, randomDelay));
 
-    const response = await fetchWithRetry(HELIUS_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 'my-id',
-        method: 'getAssetBatch',
-        params: {
-          ids: mintAddresses
-        },
-      }),
-    });
-    const { result } = await response;
+    const cacheKey = `tokenmetadata:${mintAddresses.join(',')}`;
+    const cachedResponse = await kv.get(cacheKey);
+
+    let finalResult;
+
+    if (cachedResponse) {
+      console.log('Returning cached response', cachedResponse);
+      // set result as cachedResponse
+      finalResult = cachedResponse;
+    } else {
+      const response = await fetchWithRetry(HELIUS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'my-id',
+          method: 'getAssetBatch',
+          params: {
+            ids: mintAddresses
+          },
+        }),
+      });
+
+      await kv.set(cacheKey, JSON.stringify(response), { ex: 3600 });
+
+
+      const { result } = await response;
+
+      finalResult = result;
+    }
     
     // Process the result to extract relevant metadata
-    const processedResult = result.map((asset: any) => ({
+    const processedResult = finalResult.map((asset: any) => ({
       id: asset.id,
       content: {
         metadata: asset.content?.metadata,
