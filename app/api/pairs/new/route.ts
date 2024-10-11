@@ -18,25 +18,26 @@ import {
 import { BN } from 'bn.js';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 
-const HELIUS_API_KEY = '0d4b4fd6-c2fc-4f55-b615-a23bab1ffc85';
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
+const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
+
 const HELIUS_API_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-const BIRDEYE_API_KEY = '76e4f97ddfa74b42b3e757721f231279';
 const BIRDEYE_BASE_URL = 'https://public-api.birdeye.so/defi';
 const PROGRAM_IDS = ['65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9', 'Ei1CgRq6SMB8wQScEKeRMGYkyb3YmRTaej1hpHcqAV9r']
 const cache = new Map();
 
 async function fetchWithRetry(url: string, options: any, retries = 5, backoff = 300) {
   const cacheKey = `${url}-${JSON.stringify(options)}`;
-  if (cache.has(cacheKey)) {
-    return cache.get(cacheKey);
-  }
+  // if (cache.has(cacheKey)) {
+  //   return cache.get(cacheKey);
+  // }
 
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
       if (response.status !== 429) {
         const jsonData = await response.json();
-        cache.set(cacheKey, jsonData);
+        // cache.set(cacheKey, jsonData);
         return jsonData;
       }
       console.log(`Rate limited. Retrying in ${backoff}ms...`);
