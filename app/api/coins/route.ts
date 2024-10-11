@@ -1,44 +1,23 @@
-import { NextResponse } from 'next/server';
-import axios from 'axios';
-import { Connection, Keypair, PublicKey } from '@solana/web3.js';
-import {
-  CpmmPoolInfoLayout,
-  fetchMultipleMintInfos,
-  RAYMint,
-  SOLMint,
-  splAccountLayout,
-  toApiV3Token,
-} from '@raydium-io/raydium-sdk-v2';
-import Decimal from 'decimal.js-light';
-import {
-  getAssociatedTokenAddressSync,
-  TOKEN_2022_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import { BN } from 'bn.js';
-import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
+import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { CpmmPoolInfoLayout, toApiV3Token } from '@raydium-io/raydium-sdk-v2';
+import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AnchorProvider, Program } from '@coral-xyz/anchor';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
 
 const HELIUS_API_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 const BIRDEYE_BASE_URL = 'https://public-api.birdeye.so/defi';
-const PROGRAM_IDS = ['65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9', 'Ei1CgRq6SMB8wQScEKeRMGYkyb3YmRTaej1hpHcqAV9r']
-const cache = new Map();
+const PROGRAM_IDS = ['65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9', 'Ei1CgRq6SMB8wQScEKeRMGYkyb3YmRTaej1hpHcqAV9r'];
 
 async function fetchWithRetry(url: string, options: any, retries = 5, backoff = 300) {
-  const cacheKey = `${url}-${JSON.stringify(options)}`;
-  if (cache.has(cacheKey)) {
-    return cache.get(cacheKey);
-  }
-
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
       if (response.status !== 429) {
-        const jsonData = await response.json();
-        cache.set(cacheKey, jsonData);
-        return jsonData;
+        return await response.json();
       }
       console.log(`Rate limited. Retrying in ${backoff}ms...`);
     } catch (error) {
@@ -51,11 +30,6 @@ async function fetchWithRetry(url: string, options: any, retries = 5, backoff = 
 }
 
 async function fetchTokenMetadata(mintAddresses: string[]) {
-  const cacheKey = `tokenMetadata-${mintAddresses.join(',')}`;
-  if (cache.has(cacheKey)) {
-    return cache.get(cacheKey);
-  }
-
   try {
     const randomDelay = Math.floor(Math.random() * 1000) + 500; // Random delay between 500-1500ms
     await new Promise(resolve => setTimeout(resolve, randomDelay));
@@ -84,7 +58,6 @@ async function fetchTokenMetadata(mintAddresses: string[]) {
       }
     }));
     
-    cache.set(cacheKey, processedResult);
     return processedResult;
   } catch (error) {
     console.error('Error fetching token metadata:', error);
@@ -93,25 +66,15 @@ async function fetchTokenMetadata(mintAddresses: string[]) {
 }
 
 async function fetchProgramAccounts(connection: Connection, programId: string) {
-  const cacheKey = `programAccounts-${programId}`;
-  if (cache.has(cacheKey)) {
-    return cache.get(cacheKey);
-  }
-
   const accounts = await connection.getProgramAccounts(new PublicKey(programId), {
     encoding: 'base64',
     filters: [{ dataSize: 49 }],
   });
-  cache.set(cacheKey, accounts);
+
   return accounts;
 }
 
 async function fetchBirdeyeData(tokenAddresses: string[]) {
-  const cacheKey = `birdeyeData-${tokenAddresses.join(',')}`;
-  if (cache.has(cacheKey) && cache.get(cacheKey) != null) {
-    return cache.get(cacheKey);
-  }
-
   const options = {
     method: 'GET',
     headers: {
@@ -139,14 +102,12 @@ async function fetchBirdeyeData(tokenAddresses: string[]) {
     });
 
     const result = await Promise.all(fetchPromises);
-    cache.set(cacheKey, result);
     return result;
   } catch (err) {
     console.error('Error fetching Birdeye data:', err);
     return tokenAddresses.map(() => null);
   }
 }
-
 
 type BuyResult = {
   token_amount: bigint;
@@ -227,6 +188,8 @@ class AMM {
 
 async function generateAMMs(connection: Connection, programs: { [key: string]: Program<any> }): Promise<AMM[]> {
   const amms: AMM[] = [];
+  console.info("[[[ Fetching program accounts... ]]]", Math.floor(Date.now() / 1000))
+
   const allAccountsData = await Promise.all(PROGRAM_IDS.map(programId => fetchProgramAccounts(connection, programId)));
 
   for (let i = 0; i < PROGRAM_IDS.length; i++) {
@@ -257,11 +220,16 @@ async function generateAMMs(connection: Connection, programs: { [key: string]: P
       amm.programId = programId;
 
       // Fetch mint public key
-      const signatures = await connection.getSignaturesForAddress(account.pubkey, { limit: 50 });
-      const transactions = await connection.getParsedTransactions(signatures.map((sig) => sig.signature), {maxSupportedTransactionVersion: 0});
+      const signatures = await connection.getSignaturesForAddress(account.pubkey, { limit: 10 }); // Reduced limit
+      const transactionSignatures = signatures.map((sig) => sig.signature);
+
+      // Fetch transactions in parallel
+      const transactions = await connection.getParsedTransactions(transactionSignatures, {
+        maxSupportedTransactionVersion: 0,
+      });
 
       let mintPubkey: PublicKey | null = null;
-      for (const tx of transactions) {
+      outerLoop: for (const tx of transactions) {
         if (!tx) continue;
         for (const tokenTransfer of tx.meta?.postTokenBalances ?? []) {
           const [maybeUs] = PublicKey.findProgramAddressSync(
@@ -270,10 +238,9 @@ async function generateAMMs(connection: Connection, programs: { [key: string]: P
           );
           if (maybeUs.equals(account.pubkey)) {
             mintPubkey = new PublicKey(tokenTransfer.mint);
-            break;
+            break outerLoop; // Break out of both loops
           }
         }
-        if (mintPubkey) break;
       }
 
       if (mintPubkey) {
@@ -364,6 +331,7 @@ const BONDING_CURVE_PROGRAM_IDS = ['65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9
 const LP_PROGRAM_ID = 'CVF4q3yFpyQwV8DLDiJ9Ew6FFLE1vr5ToRzsXYQTaNrj';
 
 async function generatePairs(count: number) {
+
   const connection = new Connection(
     'https://rpc.ironforge.network/mainnet?apiKey=01HRZ9G6Z2A19FY8PR4RF4J4PW'
   );
@@ -371,9 +339,11 @@ async function generatePairs(count: number) {
   // Initialize programs
   const programs: { [key: string]: Program<any> } = {};
   // @ts-ignore
-  const provider = new AnchorProvider(connection, undefined, {})
+  const provider = new AnchorProvider(connection, undefined, {});
 
-  const allProgramIds = [...BONDING_CURVE_PROGRAM_IDS, LP_PROGRAM_ID];
+  const allProgramIds = [...PROGRAM_IDS, LP_PROGRAM_ID];
+
+  // Looping through program IDs
   await Promise.all(allProgramIds.map(async (programId) => {
     const IDL = await Program.fetchIdl(new PublicKey(programId), provider);
     if (IDL) {
@@ -382,6 +352,7 @@ async function generatePairs(count: number) {
   }));
 
   const amms = await generateAMMs(connection, programs);
+
   const ammSlice = amms.slice(0, count);
 
   const pairs = await Promise.all(ammSlice.map(async (amm) => {
@@ -415,8 +386,7 @@ async function generatePairs(count: number) {
     
     const metadata = {...metadataResult?.content,...metadataResult.content.metadata};
     const birdeyeData = birdeyeResult;
-    console.log(metadata)
-    // const age = await calculateAgeAndTxCount(connection, relevantMint);
+
     return {
       id: relevantMint.toBase58(),
       image: metadata?.image || birdeyeData?.logoURI || "https://via.assets.so/img.jpg?w=400&h=150&tc=blue&bg=#000000&t=",
@@ -429,17 +399,17 @@ async function generatePairs(count: number) {
       twitter: metadata?.links?.twitter || "https://twitter.com",
       telegram: metadata?.links?.telegram || "https://t.me",
       website: metadata?.links?.website || "https://example.com",
-      // age: age.age,
-      // txCount: age.txCount
     };
   }));
 
   return pairs.filter(Boolean);
 }
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const count = parseInt(searchParams.get('count') || '10', 10);
+export const revalidate = 3600; // 1 hour
+
+export async function GET(request: NextRequest) {
+  const count = parseInt(request.nextUrl.searchParams.get('count') || '10', 10);
+  
   const pairs = await generatePairs(count);
 
   // Convert BigInt values to strings before JSON serialization
@@ -455,4 +425,15 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json(serializedPairs);
+}
+
+export async function POST(request: NextRequest) {
+  const { secret } = await request.json();
+
+  if (secret !== process.env.REVALIDATION_SECRET) {
+    return NextResponse.json({ message: 'Invalid secret' }, { status: 401 });
+  }
+
+  revalidatePath('/api/pairs');
+  return NextResponse.json({ revalidated: true, now: Date.now() });
 }
