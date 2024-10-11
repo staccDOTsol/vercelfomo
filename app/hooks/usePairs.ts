@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function usePairs() {
 	const fetchPairs = async () => {
-		const response = await fetch("/api/pairs/new?count=200");
+		const response = await fetch("/api/pairs/new?count=50");
 		if (!response.ok) {
 			throw new Error("Network response was not ok");
 		}
