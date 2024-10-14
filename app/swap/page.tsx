@@ -6,6 +6,7 @@ import { createJupiterApiClient } from "@jup-ag/api"
 import { Card, CardHeader, CardBody, CardFooter, Button, Input } from "@nextui-org/react"
 import { Icon } from "@iconify/react"
 import { Connection, VersionedTransaction, PublicKey } from "@solana/web3.js"
+import { debounce } from 'lodash-es';
 
 const jupiterApi = createJupiterApiClient({ basePath: "https://superswap.fomo3d.fun" })
 
@@ -196,7 +197,7 @@ export default function Component() {
   }
 
   const handleSearchTokens = useCallback(
-    debounce(async (searchValue: string, isInput: boolean) => {
+    debounze(async (searchValue: string, isInput: boolean) => {
       const searchFunc = isInput ? setSearchInput : setSearchOutput
       const openFunc = isInput ? setIsInputSelectOpen : setIsOutputSelectOpen
       searchFunc(searchValue)
