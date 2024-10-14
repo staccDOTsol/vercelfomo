@@ -23,7 +23,10 @@ export default function TokenPage() {
 	interface Pair {
 	  id: number;
 	  token: string;
+	  baseTokenMint: string;
+	  quoteTokenMint: string;
 	  price: string;
+	  
 	  age: string;
 	  buys: string | number;
 	  sells: string | number;
