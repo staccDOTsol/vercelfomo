@@ -693,7 +693,7 @@ const ai = await connection.getAccountInfo(tokenMint)
 					<Card className="bg-transparent border border-white/10">
 						<CardBody className="text-center">
 							<div className="leading-none pb-1 text-md uppercase text-white/50">Price</div>
-							<span className="text-2xl leading-none">
+							<span className="inter text-sm font-black leading-none">
 								{(token.price / 10 ** 9).toFixed(9)} SOL
 							</span>
 						</CardBody>
@@ -701,7 +701,7 @@ const ai = await connection.getAccountInfo(tokenMint)
 					<Card className="bg-transparent border border-white/10">
 						<CardBody className="text-center">
 							<div className="leading-none pb-1 text-md uppercase text-white/50">Market Cap</div>
-							<span className="text-2xl leading-none">${((token.price / 10 ** 9)* 1_000_000_000 )* solusdc}$</span>
+							<span className="inter text-sm font-black leading-none">${((token.price / 10 ** 9)* 1_000_000_000 )* solusdc}</span>
 						</CardBody>
 					</Card>
 				</div>
@@ -736,7 +736,7 @@ const ai = await connection.getAccountInfo(tokenMint)
                </>
              )}
 
-                <span className="text-white/50 text-md">You will receive min <span className="text-white">614</span> @PEPPA</span>
+                <span className="text-white/50 text-xs inter">You will receive min <span className="text-white">614</span> @PEPPA</span>
               </div>
 						</CardBody>
 					</Card>
