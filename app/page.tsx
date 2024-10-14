@@ -16,6 +16,7 @@ export default function Home() {
   if (isLoading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
   if (error) return <div className="flex items-center justify-center h-screen">Error: {error.message}</div>;
   console.log(coins)
+
   return (
     <div>
       <div className="flex flex-col items-center justify-center">
@@ -34,7 +35,19 @@ export default function Home() {
           <ItemFilterBar />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-          {coins && coins.length > 0 && coins.map((coin: any) => (
+          {coins && coins.length > 0 && coins
+          .sort((a: any, b: any) => {
+            // Sort by coin.completed if not null, otherwise keep original order
+            if (a.completed !== null && b.completed !== null) {
+              return b.completed - a.completed; // Descending order
+            } else if (a.completed !== null) {
+              return -1; // a comes first
+            } else if (b.completed !== null) {
+              return 1; // b comes first
+            }
+            return 0; // Keep original order if both are null
+          })
+          .map((coin: any) => (
             <Card
               key={coin.mint.address}
               isPressable
