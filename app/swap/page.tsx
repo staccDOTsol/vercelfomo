@@ -210,7 +210,14 @@ export default function Component() {
               if (!response.ok) {
                 throw new Error('Failed to fetch tokens')
               }
-              const filteredTokens = await response.json()
+              let filteredTokens = await response.json()
+              
+              // Fetch images only for top 10 results
+              filteredTokens = filteredTokens.slice(0, 10).map((token:any) => ({
+                ...token,
+                logoURI: token.logoURI // Assuming logoURI is already present
+              }))
+              
               setTokens(filteredTokens)
             } catch (error) {
               console.error('Error fetching tokens:', error)
@@ -221,7 +228,7 @@ export default function Component() {
               token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
               token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
               token.address.toLowerCase().includes(searchValue.toLowerCase())
-            )
+            ).slice(0, 10) // Limit to top 10 results
             setTokens(filteredTokens)
           }
           openFunc(true)
