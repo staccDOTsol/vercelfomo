@@ -36,11 +36,11 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           {coins && coins.length > 0 && coins.map((coin: any) => (
             <Card
-              key={coin.id}
+              key={coin.mint.address}
               isPressable
               onPress={() => {
-                console.log(coin.id)
-                router.push(`/token/${coin.id}`);
+                console.log(coin.mint.address)
+                router.push(`/token/${coin.mint.address}`);
             }}>
               <CardBody className="flex flex-col gap-2">
                 <div className="flex items-center gap-1 absolute top-2 right-2">
