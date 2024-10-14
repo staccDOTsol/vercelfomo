@@ -197,7 +197,7 @@ export default function Component() {
   }
 
   const handleSearchTokens = useCallback(
-    debounze(async (searchValue: string, isInput: boolean) => {
+    debounce(async (searchValue: string, isInput: boolean) => {
       const searchFunc = isInput ? setSearchInput : setSearchOutput
       const openFunc = isInput ? setIsInputSelectOpen : setIsOutputSelectOpen
       searchFunc(searchValue)
