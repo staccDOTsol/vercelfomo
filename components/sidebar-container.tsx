@@ -1,22 +1,19 @@
 "use client";
+
 import { Image, Link } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 import Sidebar from "@/components/sidebar";
 import Logo from "@/app/assets/images/logo_color.svg";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 import { sidebarItems } from "@/local-data/sidebar-items";
 
 import { Button, Input, ScrollShadow, Spacer, User } from "@nextui-org/react";
 import { WalletDisconnectButton, WalletModalButton } from "@solana/wallet-adapter-react-ui";
-import { connected } from "process";
-
-const user = {
-	id: 1,
-	name: "Jonathon",
-	avatar: "https://i.pravatar.cc/150?img=3",
-};
 
 export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { toggleSidebar: () => void; isSidebarOpen: boolean }) {
+  const { connected } = useWallet();
+
 	return (
 		<>
 			<div className="fixed top-0 left-0 flex h-full w-72 flex-col border-r-small border-divider p-6 bg-black z-50">
@@ -53,7 +50,7 @@ export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { tog
 					<Spacer y={8} />
 				</ScrollShadow>
 
-				{!connected ? <WalletModalButton /> : <WalletDisconnectButton />}
+				{connected ? <WalletDisconnectButton /> : <WalletModalButton />}
 			</div>
 		</>
 	);
