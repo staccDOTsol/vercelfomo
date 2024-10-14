@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { createJupiterApiClient } from "@jup-ag/api"
-import { Card, CardHeader, CardBody, CardFooter, Button } from "@nextui-org/react"
-import { Input } from "@nextui-org/react"
+import { Card, CardHeader, CardBody, CardFooter, Button, Input } from "@nextui-org/react"
 import { Icon } from "@iconify/react"
 import { Connection, VersionedTransaction, PublicKey } from "@solana/web3.js"
 
@@ -196,17 +195,31 @@ export default function Component() {
     return (balanceNumber / (10 ** decimals)).toFixed(6)
   }
 
-  const handleSearchTokens = (searchValue: string, isInput: boolean) => {
+  const handleSearchTokens = async (searchValue: string, isInput: boolean) => {
     const searchFunc = isInput ? setSearchInput : setSearchOutput
     const openFunc = isInput ? setIsInputSelectOpen : setIsOutputSelectOpen
     searchFunc(searchValue)
     if (searchValue.length >= 2) {
-      const filteredTokens = tokens.filter(token => 
-        token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
-        token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        token.address.toLowerCase().includes(searchValue.toLowerCase())
-      )
-      setTokens(filteredTokens)
+      if (!isInput) {
+        try {
+          const response = await fetch(`/api/token?search=${encodeURIComponent(searchValue)}`)
+          if (!response.ok) {
+            throw new Error('Failed to fetch tokens')
+          }
+          const filteredTokens = await response.json()
+          setTokens(filteredTokens)
+        } catch (error) {
+          console.error('Error fetching tokens:', error)
+          setError('Failed to fetch tokens. Please try again.')
+        }
+      } else {
+        const filteredTokens = tokens.filter(token => 
+          token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
+          token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          token.address.toLowerCase().includes(searchValue.toLowerCase())
+        )
+        setTokens(filteredTokens)
+      }
     } else {
       fetchTokens() // Reset to all tokens
     }
