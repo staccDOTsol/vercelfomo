@@ -18,7 +18,7 @@ export default function TopMenu({ toggleSidebar }: { toggleSidebar: () => void }
 	return (
     <div>
       {!connected ? (
-      <WalletModalButton/>): (<WalletDisconnectButton/>)}
+      <WalletConnectButton/>): (<WalletDisconnectButton/>)}
       <div className="flex items-center justify-between w-full p-4 md:hidden">
         {pathname !== "/" && <Image src={Logo.src} alt="Logo" width={80} height={80} />}
         <MenuButton  toggleSidebar={toggleSidebar}/>
