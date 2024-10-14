@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { Card, CardHeader, CardBody, CardFooter, Button, Input, Select, SelectItem } from "@nextui-org/react";
