@@ -5849,6 +5849,7 @@ export default function LaunchPage() {
 
 			if (values.value.dex === "GOBBLER") {
 				try {
+					// @ts-ignore
 					 createGobblerPools(values.value);
 					console.log("Gobbler pools created successfully");
 				} catch (error) {
@@ -6225,9 +6226,6 @@ const [error, setError] = useState<string | null>(null);
 					mint: mint.publicKey,
 					creator: wallet.publicKey,
 					
-					systemProgram: SystemProgram.programId,
-					associatedTokenProgram: new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
-					rent: SYSVAR_RENT_PUBKEY,
 					tokenProgram2022: new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"),
 					program: program2.programId,
 				})
@@ -6265,11 +6263,7 @@ const [error, setError] = useState<string | null>(null);
 						user: wallet.publicKey,
 						mint: mint.publicKey,
 
-						bondingCurveTokenAccount: getAssociatedTokenAddressSync(mint.publicKey, bondingCurvePda, true, new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")),			
-						userTokenAccount: 					getAssociatedTokenAddressSync(mint.publicKey, wallet.publicKey, true, new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")),						
-						systemProgram: SystemProgram.programId,
 						tokenProgram: new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"),
-						sysvarRecentSlothashes: new PublicKey("SysvarRecentB1ockHashes11111111111111111111"),
 						hydra: new PublicKey("AZHP79aixRbsjwNhNeuuVsWD4Gdv1vbYQd8nWKMGZyPZ"),
 						program: program2.programId,
 					})

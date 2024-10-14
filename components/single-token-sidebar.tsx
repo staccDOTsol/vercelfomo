@@ -8,10 +8,10 @@ import SidebarStats from "@/components/sidebar-stats";
 import SlippageInput from "@/components/slippage-input";
 import AmountInput from "@/components/amount-input";
 import { useEffect, useMemo, useState } from "react";
-import { createAssociatedTokenAccountInstruction } from '@solana/spl-token'
-import { AddressLookupTableAccount, Connection, PublicKey, SystemProgram, SYSVAR_RECENT_BLOCKHASHES_PUBKEY, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction} from '@solana/web3.js'
+import { createAssociatedTokenAccountInstruction, TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { AddressLookupTableAccount, ComputeBudgetProgram, Connection, PublicKey, SystemProgram, SYSVAR_RECENT_BLOCKHASHES_PUBKEY, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction} from '@solana/web3.js'
 import { BN } from "bn.js";
-import { CREATE_CPMM_POOL_PROGRAM, getCreatePoolKeys, getPdaPoolAuthority, getPdaPoolId, makeDepositCpmmInInstruction, makeInitializeMetadata, METADATA_PROGRAM_ID, TokenInfo } from "tokengobbler";
+import { CREATE_CPMM_POOL_PROGRAM, getCreatePoolKeys, getPdaPoolAuthority, getPdaPoolId, makeDepositCpmmInInstruction, makeInitializeMetadata, makeWithdrawCpmmInInstruction, METADATA_PROGRAM_ID, TokenInfo } from "tokengobbler";
 
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
@@ -53,6 +53,33 @@ class LPAMM {
 	  return solAmount < this.realSolReserves ? solAmount : this.realSolReserves;
 	}
   
+	getBuyTokensWithSol(solAmount: bigint): { tokenAmount: bigint; solAmount: bigint } {
+		if (solAmount <= 0n) {
+		  return { tokenAmount: 0n, solAmount: 0n };
+		}
+	
+		// Calculate the product of virtual reserves
+		const n = this.virtualSolReserves * this.virtualTokenReserves;
+	
+		// Calculate the new virtual sol reserves after the purchase
+		const i = this.virtualSolReserves + solAmount;
+	
+		// Calculate the new virtual token reserves after the purchase
+		const r = n / i + 1n;
+	
+		// Calculate the amount of tokens to be purchased
+		let s = this.virtualTokenReserves - r;
+	
+		// Ensure we don't exceed the real token reserves
+		s = s < this.realTokenReserves ? s : this.realTokenReserves;
+	
+		// Ensure we're not returning zero tokens
+		if (s === 0n && solAmount > 0n) {
+		  s = 1n;
+		}
+	
+		return { tokenAmount: s, solAmount };
+	  }
 	applyBuy(tokenAmount: bigint): { tokenAmount: bigint; solAmount: bigint } {
 	  const finalTokenAmount = tokenAmount < this.realTokenReserves ? tokenAmount : this.realTokenReserves;
 	  const solAmount = this.getBuyPrice(finalTokenAmount);
@@ -76,38 +103,13 @@ class LPAMM {
 	  return { tokenAmount, solAmount };
 	}
   
-	getBuyTokensWithSol(solAmount: bigint): { tokenAmount: bigint; solAmount: bigint } {
-	  if (solAmount <= 0n) {
-		return { tokenAmount: 0n, solAmount: 0n };
-	  }
-  
-	  // Calculate the product of virtual reserves
-	  const n = this.virtualSolReserves * this.virtualTokenReserves;
-  
-	  // Calculate the new virtual sol reserves after the purchase
-	  const i = this.virtualSolReserves + solAmount;
-  
-	  // Calculate the new virtual token reserves after the purchase
-	  const r = n / i + 1n;
-  
-	  // Calculate the amount of tokens to be purchased
-	  let s = this.virtualTokenReserves - r;
-  
-	  // Ensure we don't exceed the real token reserves
-	  s = s < this.realTokenReserves ? s : this.realTokenReserves;
-  
-	  // Ensure we're not returning zero tokens
-	  if (s === 0n && solAmount > 0n) {
-		s = 1n;
-	  }
-  
-	  return { tokenAmount: s, solAmount };
-	}
   }
 export default function SingleTokenSidebar({
 	token,
 }: {
 	token: {
+		baseTokenMint: string;
+		quoteTokenMint: string;
 		mint: string;
 		name: string;
 		symbol: string;
@@ -116,6 +118,7 @@ export default function SingleTokenSidebar({
 		image: string;
 		quote?: string;
 		isBondingCurve: boolean;
+		programId: string
 	};
 }) {
 	
@@ -130,21 +133,27 @@ export default function SingleTokenSidebar({
     const aw = useAnchorWallet();
 
     // RPC URL and necessary program IDs
-    const PROGRAM_ID = new PublicKey('65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9'); // Replace with your program ID
-    const TOKEN_PROGRAM_ID_2022 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+
+	const PROGRAM_IDS = [
+		'65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9',
+		'Ei1CgRq6SMB8wQScEKeRMGYkyb3YmRTaej1hpHcqAV9r',
+	  ];
 	const jupiterApi = createJupiterApiClient({ basePath: "https://superswap.fomo3d.fun" })
     // Buy function
     const handleBuy = async () => {
         if (!aw) return null;
+		const PROGRAM_ID = new PublicKey(token.programId)
 		const provider = new AnchorProvider(connection, aw, {});
-	const IDL = await Program.fetchIdl(new PublicKey("65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9"), provider)
+	const IDL = await Program.fetchIdl(new PublicKey(token.programId), provider)
 	const	program =  new Program(IDL as any, provider);
+
         if (!wallet.publicKey || !program) {
             console.error('Wallet not connected or program not initialized');
             return;
         }
         setIsProcessing(true);
         try {
+
             const tokenMint = new PublicKey(token.mint); // Replace with actual token mint address
 
             const [bondingCurvePda] = PublicKey.findProgramAddressSync(
@@ -155,61 +164,38 @@ export default function SingleTokenSidebar({
                 [Buffer.from('global')],
                 PROGRAM_ID
             );
-
+			const ai = await connection.getAccountInfo(tokenMint)
             const userTokenAccount = getAssociatedTokenAddressSync(
                 tokenMint,
                 wallet.publicKey,
                 true,
-                TOKEN_PROGRAM_ID_2022
+                ai?.owner || TOKEN_PROGRAM_ID
             );
 
             const bondingCurveTokenAccount = getAssociatedTokenAddressSync(
                 tokenMint,
                 bondingCurvePda,
                 true,
-                TOKEN_PROGRAM_ID_2022
+				ai?.owner || TOKEN_PROGRAM_ID
             );
 
             const amountLamports = new BN(parseFloat(amount) * 10 ** 9);
-			// @ts-ignore
-			let ix = await program.methods
-                .buy(amountLamports, new BN(Number.MAX_SAFE_INTEGER))
-                .accounts({
-                    user: wallet.publicKey,
-                    mint: tokenMint,
-                    bondingCurve: bondingCurvePda,
-                    global: globalPda,
-                    bondingCurveTokenAccount: bondingCurveTokenAccount,
-                    userTokenAccount: userTokenAccount,
-                    systemProgram: SystemProgram.programId,
-                    tokenProgram: TOKEN_PROGRAM_ID_2022,
-                    sysvarRecentSlothashes: SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
-                    hydra: new PublicKey('AZHP79aixRbsjwNhNeuuVsWD4Gdv1vbYQd8nWKMGZyPZ'), // Replace with actual hydra address
-                    program: PROGRAM_ID,
-                })
-                .instruction();
+			const ammAcc = await connection.getAccountInfo(bondingCurvePda)
+			const data = ammAcc?.data.slice(8)
+			const amm = new LPAMM(
+			data?.readBigUInt64LE(0) || BigInt(0),
+			data?.readBigUInt64LE(8) || BigInt(0),
+			data?.readBigUInt64LE(16) || BigInt(0),
+			data?.readBigUInt64LE(24) || BigInt(0),
+			data?.readBigUInt64LE(32) || BigInt(0)
+			)
+
+			const { tokenAmount } = amm.getBuyTokensWithSol(BigInt(amountLamports.toString()));
+
 			if (!token.isBondingCurve) {
-				// Fetch coin data from the API
-				const response = await fetch('/api/pairs/new');
-				if (!response.ok) {
-					throw new Error('Failed to fetch coin data');
-				}
-				const coinData = await response.json();
-				console.log(coinData)
-				// Find our token in the coin data
-				const ourToken = coinData.find(coin => coin.mint === token.mint);
-				if (!ourToken) {
-					throw new Error('Our token not found in coin data');
-				}
 
-				// Use SOL as the output token
-				const outputToken = coinData.find(coin => coin.mint === 'So11111111111111111111111111111111111111112');
-				if (!outputToken) {
-					throw new Error('SOL token not found in coin data');
-				}
-
-				const tokenAMint = new PublicKey(ourToken.mint);
-				const tokenBMint = new PublicKey(outputToken.mint);
+				const tokenAMint = new PublicKey(token.baseTokenMint );
+				const tokenBMint = new PublicKey(token.quoteTokenMint);
 				const isFront = new BN(tokenAMint.toBuffer()).lte(new BN(tokenBMint.toBuffer()));
 				
 				const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint];
@@ -233,120 +219,134 @@ export default function SingleTokenSidebar({
 				// Fetch quote for swapping SOL to tokenA
 				const quoteA = await jupiterApi.quoteGet({
 					inputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
-					outputMint: token.mint,
+					outputMint: mintA.toString(),
 					amount: Number(amountLamports),
-					slippageBps: 100, // 1% slippage
+					slippageBps: 1000, // 1% slippage
 				});
 				
 				// Fetch quote for swapping SOL to tokenB
 				const quoteB = await jupiterApi.quoteGet({
 					inputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
-					outputMint: outputToken.mint,
+					outputMint: mintB.toString(),
 					amount: Number(amountLamports),
-					slippageBps: 100, // 1% slippage
+					slippageBps: 1000, // 1% slippage
 				});
 				
 				if (!quoteA || !quoteB) {
 					throw new Error('Failed to fetch quotes');
 				}
 				// Perform swaps
-				const swapResultA = await jupiterApi.swapInstructionsPost({
+				const swapResultA = await jupiterApi.swapPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
-						quoteResponse: quoteA
+						quoteResponse: quoteA,
+						wrapAndUnwrapSol: true
 					},
 				});
-				const swapResultB = await jupiterApi.swapInstructionsPost({
+				const swapResultB = await jupiterApi.swapPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
-						quoteResponse: quoteB
+						quoteResponse: quoteB,
+						wrapAndUnwrapSol: true
 					},
 				});
-
-				const deserializeInstruction = (instruction) => {
-					return new TransactionInstruction({
-						programId: new PublicKey(instruction.programId),
-						keys: instruction.accounts.map((key) => ({
-							pubkey: new PublicKey(key.pubkey),
-							isSigner: key.isSigner,
-							isWritable: key.isWritable,
-						})),
-						data: Buffer.from(instruction.data, "base64"),
-					});
-				};
-
-				const getAddressLookupTableAccounts = async (keys) => {
-					const addressLookupTableAccountInfos = await connection.getMultipleAccountsInfo(
-						keys.map((key) => new PublicKey(key))
-					);
-
-					return addressLookupTableAccountInfos.reduce((acc, accountInfo, index) => {
-						const addressLookupTableAddress = keys[index];
-						if (accountInfo) {
-							const addressLookupTableAccount = new AddressLookupTableAccount({
-								key: new PublicKey(addressLookupTableAddress),
-								state: AddressLookupTableAccount.deserialize(accountInfo.data),
-							});
-							acc.push(addressLookupTableAccount);
-						}
-						return acc;
-					}, []);
-				};
-
-				const addressLookupTableAccounts = await getAddressLookupTableAccounts(swapResultA.addressLookupTableAddresses);
-				addressLookupTableAccounts.push(...(await getAddressLookupTableAccounts(swapResultB.addressLookupTableAddresses)));
-
-				const blockhash = (await connection.getLatestBlockhash()).blockhash;
-			
+				// Deserialize the swap transactions
+				const swapTransactionA = Buffer.from(swapResultA.swapTransaction, 'base64');
+				const swapTransactionB = Buffer.from(swapResultB.swapTransaction, 'base64');
+				
+				var transactionA = VersionedTransaction.deserialize(swapTransactionA);
+				var transactionB = VersionedTransaction.deserialize(swapTransactionB);
+				
+				console.log('Swap Transaction A:', transactionA);
+				console.log('Swap Transaction B:', transactionB);
+				if (!wallet.signAllTransactions) return 
 				// Update tokenAAmount and tokenBAmount with the expected output amounts
 				const tokenAAmount = new BN(quoteA.outAmount);
 				const tokenBAmount = new BN(quoteB.outAmount);
+				const anai = await connection.getAccountInfo(getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey))
+				const someIxs : TransactionInstruction[] = [] 
+				if (!anai){
+					someIxs.push(
+						createAssociatedTokenAccountInstruction(
+							wallet.publicKey,
+							getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey),
+							wallet.publicKey,
+							poolKeys.lpMint
+						)
+					);
+				}
 
-				ix = makeDepositCpmmInInstruction(
+				let ix = makeDepositCpmmInInstruction(
 					CREATE_CPMM_POOL_PROGRAM,
 					wallet.publicKey,
 					getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
-					poolKeys.id,
+					poolKeys.poolId,
 					poolKeys.lpMint,
 					getAssociatedTokenAddressSync(mintA, wallet.publicKey),
 					getAssociatedTokenAddressSync(mintB, wallet.publicKey),
-					poolKeys.tokenVaultA,
-					poolKeys.tokenVaultB,
+					poolKeys.vaultA,
+					poolKeys.vaultA,
 					mintA,
 					mintB,
 					poolKeys.lpMint,
 					new BN(0), // LP amount, 0 for single-sided deposit
 					tokenAAmount,
 					tokenBAmount,
-					TOKEN_PROGRAM_ID_2022,
-					TOKEN_PROGRAM_ID_2022
-				);
+					// @ts-ignore
+					(await connection.getAccountInfo(poolKeys.vaultA)).owner,
+					// @ts-ignore
+					(await connection.getAccountInfo(poolKeys.vaultA)).owner,				);
+					someIxs.push(ix)
+				// Create separate transactions for setup instructions
+			
 				const messageV0 = new TransactionMessage({
 					payerKey: wallet.publicKey,
-					recentBlockhash: blockhash,
+					recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
 					instructions: [
-						deserializeInstruction(swapResultA.swapInstruction),
-						deserializeInstruction(swapResultB.swapInstruction),
-						createAssociatedTokenAccountInstruction(
-							wallet.publicKey,
-							getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey),
-							wallet.publicKey,
-							poolKeys.lpMint
-						),
-						ix
-					],
-				}).compileToV0Message(addressLookupTableAccounts);
+						...someIxs
+							],
+				}).compileToV0Message([]);
 				const transaction = new VersionedTransaction(messageV0);
 
+				const signed = await wallet.signAllTransactions([transactionA, transactionB, transaction])
+			for (const signedTx of signed) {
+				const txId = await connection.sendRawTransaction(signedTx.serialize());
+				console.log(`Transaction sent: ${txId}`);
+				await connection.confirmTransaction(txId, 'confirmed');
+				console.log(`Transaction ${txId} confirmed`);
+			}
 			}
 			else {
+
+			// @ts-ignore
+			let ix = await program.methods
+			.buy(new BN(tokenAmount.toString()), new BN(Number.MAX_SAFE_INTEGER))
+			.accounts({
+				user: wallet.publicKey,
+				mint: tokenMint,
+				bondingCurve: bondingCurvePda,
+				global: globalPda,
+				bondingCurveTokenAccount: bondingCurveTokenAccount,
+				userTokenAccount: userTokenAccount,
+				systemProgram: SystemProgram.programId,
+				tokenProgram:  ai?.owner || TOKEN_PROGRAM_ID,
+				sysvarRecentSlothashes: SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
+				hydra: new PublicKey('AZHP79aixRbsjwNhNeuuVsWD4Gdv1vbYQd8nWKMGZyPZ'), // Replace with actual hydra address
+				program: PROGRAM_ID,
+			})
+			.instruction();
 				const tx = new Transaction();
+				tx.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333}))
+				const ai2 = await connection.getAccountInfo(getAssociatedTokenAddressSync(new PublicKey(token.mint), wallet.publicKey, true, ai?.owner || TOKEN_PROGRAM_ID))
+				if (!ai2){
 				tx.add(createAssociatedTokenAccountInstruction(
 					wallet.publicKey,
-					getAssociatedTokenAddressSync(new PublicKey(token), wallet.publicKey),
+					getAssociatedTokenAddressSync(new PublicKey(token.mint), wallet.publicKey, true, ai?.owner || TOKEN_PROGRAM_ID),
 					wallet.publicKey,
-					new PublicKey(token)
+					new PublicKey(token.mint),
+					ai?.owner || TOKEN_PROGRAM_ID
 				));
+			}
 				tx.add(ix);
 				const signature = await wallet.sendTransaction(tx, connection);
 				console.log('Transaction signature', signature);
@@ -371,11 +371,13 @@ export default function SingleTokenSidebar({
         setIsProcessing(true);
         try {
             const tokenMint = new PublicKey(token.mint);
-
+			const PROGRAM_ID = new PublicKey(token.programId)
+const ai = await connection.getAccountInfo(tokenMint)
             const [bondingCurvePda] = PublicKey.findProgramAddressSync(
                 [Buffer.from('bonding-curve'), tokenMint.toBuffer()],
                 PROGRAM_ID
             );
+			const TOKEN_PROGRAM_ID_2022 = ai?.owner || TOKEN_PROGRAM_ID
             const [globalPda] = PublicKey.findProgramAddressSync(
                 [Buffer.from('global')],
                 PROGRAM_ID
@@ -395,10 +397,205 @@ export default function SingleTokenSidebar({
                 TOKEN_PROGRAM_ID_2022
             );
 
-            const sellAmountLamports = new BN(parseFloat(sellAmount) * 10 ** 9);
+            const sellAmountLamports = new BN(parseFloat(amount) * 10 ** 9);
+            const ammAcc = await connection.getAccountInfo(bondingCurvePda);
+            const data = ammAcc?.data.slice(8);
+            const amm = new LPAMM(
+                data?.readBigUInt64LE(0) || BigInt(0),
+                data?.readBigUInt64LE(8) || BigInt(0),
+                data?.readBigUInt64LE(16) || BigInt(0),
+                data?.readBigUInt64LE(24) || BigInt(0),
+                data?.readBigUInt64LE(32) || BigInt(0)
+            );
+
+            const { tokenAmount, solAmount } = amm.getBuyTokensWithSol(BigInt(sellAmountLamports.toString()));
+            
+            // Update sellAmountLamports to use the calculated tokenAmount
 // @ts-ignore
-            const ix = await program.methods
-                .sell(sellAmountLamports, new BN(0))
+
+            if (!token.isBondingCurve) {
+                const tokenAMint = new PublicKey(token.baseTokenMint);
+                const tokenBMint = new PublicKey(token.quoteTokenMint);
+                const isFront = new BN(tokenAMint.toBuffer()).lte(new BN(tokenBMint.toBuffer()));
+                
+                const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint];
+                const aa = new BN(sellAmountLamports.toString());
+                const ab = new BN(0); // Assuming we're only selling one token
+                
+                const configId = 0;
+                const [ammConfigKey, _bump] = PublicKey.findProgramAddressSync(
+                    [Buffer.from('amm_config'), new BN(configId).toArrayLike(Buffer, 'be', 8)],
+                    CREATE_CPMM_POOL_PROGRAM
+                );
+                const poolKeys = getCreatePoolKeys({
+                    creator: wallet.publicKey,
+                    programId: CREATE_CPMM_POOL_PROGRAM,
+                    mintA,
+                    mintB,
+                    configId: ammConfigKey
+                });
+                poolKeys.configId = ammConfigKey;
+                const blockhash = (await connection.getLatestBlockhash()).blockhash;
+                const userBaseTokenAccount = await getAssociatedTokenAddressSync(
+                    new PublicKey(token.baseTokenMint),
+                    wallet.publicKey,
+                    true,
+                    TOKEN_PROGRAM_ID_2022
+                );
+                const userQuoteTokenAccount = await getAssociatedTokenAddressSync(
+                    new PublicKey(token.quoteTokenMint),
+                    wallet.publicKey,
+                    true,
+                    TOKEN_PROGRAM_ID_2022
+                );
+
+                // Fetch initial token balances
+                const initialBaseBalance = await connection.getTokenAccountBalance(userBaseTokenAccount);
+                const initialQuoteBalance = await connection.getTokenAccountBalance(userQuoteTokenAccount);
+
+                // Perform withdraw instruction
+                const withdrawIx = makeWithdrawCpmmInInstruction(
+                    CREATE_CPMM_POOL_PROGRAM,
+                    wallet.publicKey,
+                    getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
+                    poolKeys.poolId,
+                    poolKeys.lpMint,
+                    userBaseTokenAccount,
+                    userQuoteTokenAccount,
+                    poolKeys.vaultA,
+                    poolKeys.vaultB,
+                    mintA,
+                    mintB,
+                    poolKeys.lpMint,
+                    new BN(sellAmountLamports.toString()),
+                    new BN(0),
+                    new BN(0),
+                    (await connection.getAccountInfo(poolKeys.vaultA))!.owner,
+                    (await connection.getAccountInfo(poolKeys.vaultB))!.owner
+                );
+
+                // Create and send transaction
+                const withdrawTx = new Transaction()
+				
+				.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333}))
+				.add(withdrawIx);
+                const withdrawSignature = await wallet.sendTransaction(withdrawTx, connection);
+                await connection.confirmTransaction(withdrawSignature, 'confirmed');
+
+                // Fetch final token balances
+                const finalBaseBalance = await connection.getTokenAccountBalance(userBaseTokenAccount);
+                const finalQuoteBalance = await connection.getTokenAccountBalance(userQuoteTokenAccount);
+
+                // Calculate the actual amounts of tokens withdrawn
+                const baseTokenAmountWithdrawn = new BN(finalBaseBalance.value.amount).sub(new BN(initialBaseBalance.value.amount));
+                const quoteTokenAmountWithdrawn = new BN(finalQuoteBalance.value.amount).sub(new BN(initialQuoteBalance.value.amount));
+
+                // Fetch quotes for swapping both base and quote tokens to SOL
+                const quoteBase = await jupiterApi.quoteGet({
+                    inputMint: token.baseTokenMint,
+                    outputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
+                    amount: baseTokenAmountWithdrawn.toNumber(),
+                    slippageBps: 1000, // 1% slippage
+                });
+
+                const quoteQuote = await jupiterApi.quoteGet({
+                    inputMint: token.quoteTokenMint,
+                    outputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
+                    amount: quoteTokenAmountWithdrawn.toNumber(),
+                    slippageBps: 1000, // 1% slippage
+                });
+
+                if (!quoteBase || !quoteQuote) {
+                    throw new Error('Failed to fetch quotes for token swaps');
+                }
+                // Perform swaps
+                const swapResultBase = await jupiterApi.swapPost({
+                    swapRequest: {
+                        userPublicKey: wallet.publicKey.toBase58(),
+                        quoteResponse: quoteBase,
+                        wrapAndUnwrapSol: true
+                    },
+                });
+                const swapResultQuote = await jupiterApi.swapPost({
+                    swapRequest: {
+                        userPublicKey: wallet.publicKey.toBase58(),
+                        quoteResponse: quoteQuote,
+                        wrapAndUnwrapSol: true
+                    },
+                });
+                // Deserialize the swap transactions
+                const swapTransactionBase = Buffer.from(swapResultBase.swapTransaction, 'base64');
+                const swapTransactionQuote = Buffer.from(swapResultQuote.swapTransaction, 'base64');
+                
+                var transactionBase = VersionedTransaction.deserialize(swapTransactionBase);
+                var transactionQuote = VersionedTransaction.deserialize(swapTransactionQuote);
+                
+                console.log('Swap Transaction Base:', transactionBase);
+                console.log('Swap Transaction Quote:', transactionQuote);
+                if (!wallet.signAllTransactions) return 
+                // Update baseTokenAmount and quoteTokenAmount with the expected output amounts
+                const baseTokenAmount = new BN(quoteBase.outAmount);
+                const quoteTokenAmount = new BN(quoteQuote.outAmount);
+                const anai = await connection.getAccountInfo(getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey))
+                const someIxs : TransactionInstruction[] = [] 
+                if (!anai){
+                    someIxs.push(
+                        createAssociatedTokenAccountInstruction(
+                            wallet.publicKey,
+                            getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey),
+                            wallet.publicKey,
+                            poolKeys.lpMint
+                        )
+                    );
+                }
+
+                let ix = makeWithdrawCpmmInInstruction(
+                    CREATE_CPMM_POOL_PROGRAM,
+                    wallet.publicKey,
+                    getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
+                    poolKeys.poolId,
+                    poolKeys.lpMint,
+                    getAssociatedTokenAddressSync(mintA, wallet.publicKey),
+                    getAssociatedTokenAddressSync(mintB, wallet.publicKey),
+                    poolKeys.vaultA,
+                    poolKeys.vaultB,
+                    mintA,
+                    mintB,
+                    poolKeys.lpMint,
+                    new BN(sellAmountLamports.toString()),
+                    baseTokenAmount,
+                    quoteTokenAmount,
+                    // @ts-ignore
+                    (await connection.getAccountInfo(poolKeys.vaultA)).owner,
+                    // @ts-ignore
+                    (await connection.getAccountInfo(poolKeys.vaultB)).owner
+                );
+                someIxs.push(ix)
+                // Create separate transactions for setup instructions
+            
+                const messageV0 = new TransactionMessage({
+                    payerKey: wallet.publicKey,
+                    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+                    instructions: [
+                        ...someIxs
+                            ],
+                }).compileToV0Message([]);
+                const transaction = new VersionedTransaction(messageV0);
+
+                const signed = await wallet.signAllTransactions([transactionBase, transactionQuote, transaction])
+                for (const signedTx of signed) {
+                    const txId = await connection.sendRawTransaction(signedTx.serialize());
+                    console.log(`Transaction sent: ${txId}`);
+                    await connection.confirmTransaction(txId, 'confirmed');
+                    console.log(`Transaction ${txId} confirmed`);
+                }
+
+            } else {
+
+				// @ts-ignore
+				const ix = await program.methods
+				// @ts-ignore
+                .sell(new BN(tokenAmount.toString()), new BN(0))
                 .accounts({
                     user: wallet.publicKey,
                     mint: tokenMint,
@@ -412,90 +609,9 @@ export default function SingleTokenSidebar({
                     program: PROGRAM_ID,
                 })
                 .instruction();
-
-            if (!token.isBondingCurve) {
-                // Fetch coin data from the API
-                const response = await fetch('/api/pairs/new');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch coin data');
-                }
-                const coinData = await response.json();
-                
-                // Find the output token data (assuming it's SOL for selling)
-                const outputToken = coinData.find(coin => coin.address === 'So11111111111111111111111111111111111111112');
-                if (!outputToken) {
-                    throw new Error('Output token (SOL) not found in coin data');
-                }
-
-                // Fetch quote for swapping token to SOL
-                const quote = await jupiterApi.quoteGet({
-                    inputMint: token.mint,
-                    outputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
-                    amount: Number(sellAmountLamports),
-                    slippageBps: 100, // 1% slippage
-                });
-                
-                if (!quote) {
-                    throw new Error('Failed to fetch quote');
-                }
-
-                // Perform swap
-                const swapResult = await jupiterApi.swapInstructionsPost({
-                    swapRequest: {
-                        userPublicKey: wallet.publicKey.toBase58(),
-                        quoteResponse: quote
-                    },
-                });
-
-                const deserializeInstruction = (instruction) => {
-                    return new TransactionInstruction({
-                        programId: new PublicKey(instruction.programId),
-                        keys: instruction.accounts.map((key) => ({
-                            pubkey: new PublicKey(key.pubkey),
-                            isSigner: key.isSigner,
-                            isWritable: key.isWritable,
-                        })),
-                        data: Buffer.from(instruction.data, "base64"),
-                    });
-                };
-
-                const getAddressLookupTableAccounts = async (keys) => {
-                    const addressLookupTableAccountInfos = await connection.getMultipleAccountsInfo(
-                        keys.map((key) => new PublicKey(key))
-                    );
-
-                    return addressLookupTableAccountInfos.reduce((acc, accountInfo, index) => {
-                        const addressLookupTableAddress = keys[index];
-                        if (accountInfo) {
-                            const addressLookupTableAccount = new AddressLookupTableAccount({
-                                key: new PublicKey(addressLookupTableAddress),
-                                state: AddressLookupTableAccount.deserialize(accountInfo.data),
-                            });
-                            acc.push(addressLookupTableAccount);
-                        }
-                        return acc;
-                    }, []);
-                };
-
-                const addressLookupTableAccounts = await getAddressLookupTableAccounts(swapResult.addressLookupTableAddresses);
-
-                const blockhash = (await connection.getLatestBlockhash()).blockhash;
-
-                const messageV0 = new TransactionMessage({
-                    payerKey: wallet.publicKey,
-                    recentBlockhash: blockhash,
-                    instructions: [
-                        ix,
-                        deserializeInstruction(swapResult.swapInstruction)
-                    ],
-                }).compileToV0Message(addressLookupTableAccounts);
-                const transaction = new VersionedTransaction(messageV0);
-
-                const signature = await wallet.sendTransaction(transaction, connection);
-                console.log('Transaction signature', signature);
-                await connection.confirmTransaction(signature, 'processed');
-            } else {
-                const tx = new Transaction().add(ix);
+                const tx = new Transaction()
+				.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333})).
+				add(ix);
                 const signature = await wallet.sendTransaction(tx, connection);
                 console.log('Transaction signature', signature);
                 await connection.confirmTransaction(signature, 'processed');
@@ -532,11 +648,11 @@ export default function SingleTokenSidebar({
 
 	useEffect(() => {
 		const fetchBalance = async () => {
-			const publicKey = new PublicKey(token)
+			const publicKey = new PublicKey(token.mint)
 			
 			try {
 				const balance = await connection.getBalance(publicKey);
-				const calculatedProgress = (balance / 85) * 10 ** 9;
+				const calculatedProgress = (balance / 85* 10 ** 9) ;
 				setProgress(Math.min(100, Math.max(0, calculatedProgress))); // Ensure progress is between 0 and 100
 			} catch (error) {
 				console.error("Error fetching balance:", error);
@@ -593,11 +709,7 @@ export default function SingleTokenSidebar({
 				<div>
 					<Card className="bg-transparent border border-white/10">
 						<CardBody className="flex flex-col gap-2">
-							<Tabs color="primary" aria-label="Tabs" radius="full" fullWidth>
-								<Tab key="buy" title="Buy" />
-								<Tab key="sell" title="Sell" />
-							</Tabs>
-
+						
 							<AmountInput amount={amount} setAmount={setAmount}/>
 
               <SlippageInput />
