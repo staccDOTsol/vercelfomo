@@ -3,9 +3,7 @@
 import { Button, Card, CardBody, Input } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 import { useState } from "react";
-
-export default function AmountInput() {
-	const [amount, setAmount] = useState("");
+export default function AmountInput({ amount, setAmount }: { amount: string; setAmount: (value: string) => void }) {
 
 	const handleButtonClick = (value: string) => {
 		setAmount(value);

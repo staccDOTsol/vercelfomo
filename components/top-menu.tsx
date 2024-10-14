@@ -6,12 +6,19 @@ import { Icon } from "@iconify/react";
 import { useRouter, usePathname } from "next/navigation";
 import Logo from "@/app/assets/images/logo_color.svg";
 import MenuButton from "@/components/menu-button";
+import { WalletConnectButton, WalletDisconnectButton, WalletModalButton } from "@solana/wallet-adapter-react-ui";
+import "@solana/wallet-adapter-react-ui/styles.css";
+import { connected } from "process";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 export default function TopMenu({ toggleSidebar }: { toggleSidebar: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
+  const {connected} = useWallet()
 	return (
     <div>
+      {!connected ? (
+      <WalletModalButton/>): (<WalletDisconnectButton/>)}
       <div className="flex items-center justify-between w-full p-4 md:hidden">
         {pathname !== "/" && <Image src={Logo.src} alt="Logo" width={80} height={80} />}
         <MenuButton  toggleSidebar={toggleSidebar}/>

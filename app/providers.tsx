@@ -9,6 +9,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 export interface ProvidersProps {
 	children: React.ReactNode;
 	themeProps?: ThemeProviderProps;
@@ -33,12 +35,16 @@ export function Providers({ children, themeProps }: ProvidersProps) {
       client={queryClient}
       persistOptions={{ persister }}
     >
+		<ConnectionProvider endpoint="https://rpc.ironforge.network/mainnet?apiKey=01HRZ9G6Z2A19FY8PR4RF4J4PW" >
+		<WalletProvider wallets={[]}>
+			<WalletModalProvider>
 			<NextUIProvider navigate={router.push}>
 				<NextThemesProvider {...themeProps}>
 					{children}
 					<ReactQueryDevtools initialIsOpen={false} />
 				</NextThemesProvider>
-			</NextUIProvider>
+			</NextUIProvider></WalletModalProvider>
+		</WalletProvider></ConnectionProvider>
 		</PersistQueryClientProvider>
 	);
 }

@@ -8,13 +8,14 @@ import { useRouter } from 'next/navigation'
 import ItemFilterBar from "@/components/item-filter-bar";
 
 import Logo from "@/app/assets/images/logo_color.svg";
+import usePairs from "./hooks/usePairs";
 
 export default function Home() {
   const router = useRouter()
-  const { coins, isLoading, error } = useCoins();
+  const { pairs: coins, isLoading, error } = usePairs();
   if (isLoading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
   if (error) return <div className="flex items-center justify-center h-screen">Error: {error.message}</div>;
-
+  console.log(coins)
   return (
     <div>
       <div className="flex flex-col items-center justify-center">
@@ -56,7 +57,7 @@ export default function Home() {
                 <div className="flex items-center gap-4">
                   <Image
                     unoptimized
-                    src={coin.image || "https://via.assets.so/img.jpg?w=400&h=150&tc=blue&bg=#000000&t="}
+                    src={coin.mint.metadata.image || "https://via.assets.so/img.jpg?w=400&h=150&tc=blue&bg=#000000&t="}
                     width={70}
                     height={70}
                     alt="avatar"
@@ -66,9 +67,9 @@ export default function Home() {
                   />
                   <div className="flex flex-col gap-0">
                     <h2 className="text-xl font-bold leading-none">
-                      <span className="opacity-50">@{coin.shortName}</span> {coin.name}
+                      <span className="opacity-50">@{coin.mint.metadata.symbol}</span> {coin.mint.metadata.name}
                     </h2>
-                    <p className="opacity-70">{coin.summary}</p>
+                    <p className="opacity-70">{coin.mint.metadata.description}</p>
                   </div>
                 </div>
 
@@ -77,15 +78,15 @@ export default function Home() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-2 w-full">
                     <div className="flex items-center gap-2">
-                      <span className="text-secondary">{coin.percentComplete}%</span>
-                      <span>${coin.totalVolume}</span>
+                      <span className="text-secondary">{coin['1h'] || 'N/A'}</span>
+                      <span>${coin.volume || 'N/A'}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span>{coin.txns} txns</span>/<span>${coin.totalVolume} total</span>
+                      <span>{coin.buys || 'N/A'} buys</span>/<span>{coin.sells || 'N/A'} sells</span>
                     </div>
                   </div>
-                  <Progress value={coin.percentComplete} classNames={{ indicator: "bg-[#9648fe]" }} size="sm" />
+                  <Progress value={parseFloat(coin['24h']) || 0} classNames={{ indicator: "bg-[#9648fe]" }} size="sm" />
                 </div>
               </CardBody>
             </Card>

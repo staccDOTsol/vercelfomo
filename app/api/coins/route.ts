@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const redis = new Redis(process.env.REDIS_URL as string);
 
   try {
-    const data = await redis.get('serializedPairs');
+    const data = await redis.get('serializedPairsNew');
     if (!data) {
       return NextResponse.json({ error: 'No data found in Redis' }, { status: 404 });
     }
