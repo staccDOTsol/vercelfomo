@@ -100,8 +100,8 @@ export default function Swap() {
                       ));
                     }}
                   >
-                    {(coin) => (
-                      <SelectItem key={coin.mint.address} textValue={coin.name}>
+                    {(coin: any) => (
+                      <SelectItem key={coin?.mint?.address} textValue={coin.name}>
                         <div className="flex gap-2 items-center">
                           <Image alt={coin.name} className="flex-shrink-0 w-5 h-5" src={coin.image} width={20} height={20} unoptimized />
                           <div className="flex flex-col">
@@ -167,8 +167,8 @@ export default function Swap() {
                       ));
                     }}
                   >
-                    {(coin) => (
-                      <SelectItem key={coin.mint.address} textValue={coin.name}>
+                    {(coin: any) => (
+                      <SelectItem key={coin?.mint?.address} textValue={coin.name}>
                         <div className="flex gap-2 items-center">
                           <Image alt={coin.name} className="flex-shrink-0 w-5 h-5" src={coin.image} width={20} height={20} unoptimized />
                           <div className="flex flex-col">
