@@ -36,13 +36,12 @@ export function Providers({ children, themeProps }: ProvidersProps) {
       client={queryClient}
       persistOptions={{ persister }}
     >
-			<WalletModalProvider>
 			<NextUIProvider navigate={router.push}>
 				<NextThemesProvider {...themeProps}>
 					{children}
 					<ReactQueryDevtools initialIsOpen={false} />
 				</NextThemesProvider>
-			</NextUIProvider></WalletModalProvider>
+			</NextUIProvider>
 		</PersistQueryClientProvider>
 	);
 }
