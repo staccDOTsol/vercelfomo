@@ -87,7 +87,7 @@ export default function Home() {
                     </div>
                   </div>
                   <Progress 
-                    value={coin.completed != null ? parseFloat(coin['24h']) || 0 : 0} 
+                    value={coin.completed != null ? parseFloat(coin.completed) || 0 : 0} 
                     classNames={{ indicator: "bg-[#9648fe]" }} 
                     size="sm" 
                   />
