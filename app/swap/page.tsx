@@ -195,36 +195,41 @@ export default function Component() {
     return (balanceNumber / (10 ** decimals)).toFixed(6)
   }
 
-  const handleSearchTokens = async (searchValue: string, isInput: boolean) => {
-    const searchFunc = isInput ? setSearchInput : setSearchOutput
-    const openFunc = isInput ? setIsInputSelectOpen : setIsOutputSelectOpen
-    searchFunc(searchValue)
-    if (searchValue.length >= 2) {
-      if (!isInput) {
-        try {
-          const response = await fetch(`/api/token?search=${encodeURIComponent(searchValue)}`)
-          if (!response.ok) {
-            throw new Error('Failed to fetch tokens')
+  const handleSearchTokens = useCallback(
+    debounce(async (searchValue: string, isInput: boolean) => {
+      const searchFunc = isInput ? setSearchInput : setSearchOutput
+      const openFunc = isInput ? setIsInputSelectOpen : setIsOutputSelectOpen
+      searchFunc(searchValue)
+      
+      if (searchValue.length >= 2) {
+        if (!isInput) {
+          try {
+            const response = await fetch(`/api/token?search=${encodeURIComponent(searchValue)}`)
+            if (!response.ok) {
+              throw new Error('Failed to fetch tokens')
+            }
+            const filteredTokens = await response.json()
+            setTokens(filteredTokens)
+          } catch (error) {
+            console.error('Error fetching tokens:', error)
+            setError('Failed to fetch tokens. Please try again.')
           }
-          const filteredTokens = await response.json()
+        } else {
+          const filteredTokens = tokens.filter(token => 
+            token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
+            token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+            token.address.toLowerCase().includes(searchValue.toLowerCase())
+          )
           setTokens(filteredTokens)
-        } catch (error) {
-          console.error('Error fetching tokens:', error)
-          setError('Failed to fetch tokens. Please try again.')
         }
+        openFunc(true)
       } else {
-        const filteredTokens = tokens.filter(token => 
-          token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
-          token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          token.address.toLowerCase().includes(searchValue.toLowerCase())
-        )
-        setTokens(filteredTokens)
+        fetchTokens() // Reset to all tokens
+        openFunc(false)
       }
-    } else {
-      fetchTokens() // Reset to all tokens
-    }
-    openFunc(true)
-  }
+    }, 300),
+    [tokens, fetchTokens, setSearchInput, setSearchOutput, setIsInputSelectOpen, setIsOutputSelectOpen, setTokens, setError]
+  )
 
   const handleCustomTokenInput = async (searchValue: string, isInput: boolean) => {
     try {
