@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from 'redis';
+import Redis from 'ioredis';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
@@ -7,12 +7,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const count = parseInt(searchParams.get('count') || '29000', 10);
 
-  const redisClient = createClient({ url: REDIS_URL });
-  await redisClient.connect();
+  const redis = new Redis(REDIS_URL as string);
 
   try {
     // Attempt to retrieve serialized pairs from Redis
-    const serializedPairsNew = await redisClient.get('serializedPairsNew');
+    const serializedPairsNew = await redis.get('serializedPairsNew');
 
     if (serializedPairsNew) {
       // If data exists in Redis, parse it and return
@@ -27,6 +26,6 @@ export async function GET(request: Request) {
     console.error('Error retrieving pairs from Redis:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   } finally {
-    await redisClient.disconnect();
+    await redis.disconnect();
   }
 }
