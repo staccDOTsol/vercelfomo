@@ -11,151 +11,155 @@ import { CrosshairMode, LineStyle } from 'lightweight-charts';
 import TvChartsHolder from "@/components/tv-charts-holder";
 import TvChart from "@/components/tv-chart";
 import useCoins from "@/app/hooks/useCoins";
-import usePair from "@/app/hooks/usePair";
 
 export default function TokenPage() {
-	let { token } = useParams();
+	let { token }: {token:string} = useParams();
 	if (typeof token === 'string' && token.split('-').length > 1) {
 		token = token.split('-')[1];
 	}
+	if (Array.isArray(token)) {
+		token = token.join('-');
+	}
+	interface Pair {
+	  id: number;
+	  token: string;
+	  price: string;
+	  age: string;
+	  buys: string | number;
+	  sells: string | number;
+	  volume: string;
+	  makers: string | number;
+	  '5m': string;
+	  '1h': string;
+	  '6h': string;
+	  '24h': string;
+	  liquidity: string;
+	  mcap: string;
+	  mint: {
+		address: string;
+		metadata: {
+		  description: string | null;
+		  image: string | null;
+		  name: string | null;
+		  symbol: string | null;
+		};
+		birdeyeData: any;
+	  };
+	  programId: string;
+	  isBondingCurve: boolean;
+	}
+	
+	  const [pair, setPair] = useState<Pair | null>(null);
+	  const [isLoading, setIsLoading] = useState<boolean>(true);
+	  const [chartData, setChartData] = useState<any>(null);
+	  const [coinData, setCoinData] = useState<any>(null);
+	  const [lastClose, setLastClose] = useState(0);
 
-
-	const [chartData, setChartData] = useState<any>(null);
-	const [coinData, setCoinData] = useState<any>(null);
-	const [isChartDataLoading, setIsChartDataLoading] = useState<boolean>(true);
-	const [isCoinDataLoading, setIsCoinDataLoading] = useState<boolean>(true);
-	const chartContainerRef = useRef<HTMLDivElement>(null);
-	const chartRef = useRef<IChartApi | null>(null);
-
-	const selectedCoin = usePair(token as string)
-	const [lastClose, setLastClose] = useState(0)
-	useEffect(() => {
-		// Fetch OHLCV data for the specific token
-		async function fetchChartData() {
-			try {
-				const response = await fetch(`/api/ohlcv/${token}`);
-				if (response.ok) {
-					const rawData = await response.json();
-					const processedData = rawData
-					
-						.map((item: any) => ({
-							time: Math.floor(item.timestamp *1000), // Convert seconds to milliseconds
-							open: Number(item.open) * 10**9,
-							high: Number(item.high) * 10**9,
-							low: Number(item.low) * 10**9,
-							close: Number(item.close) * 10**9,
-							volume: Number(item.volume)
-						}));
-						console.log(processedData);
-						if (processedData.length > 0) {
-							const lastCloseValue = processedData[processedData.length - 1].close;
-							setLastClose(lastCloseValue);
-							console.log('Last close value:', lastCloseValue);
-
-							try {
-									const data = selectedCoin
-									console.log(coinData);
-									console.log(lastClose)
-									setCoinData({
-										name: data.mint.metadata.name,
-										symbol: data.mint.metadata.symbol,
-										price: lastCloseValue,
-										marketCap: data.marketCap,
-										image: data.mint.metadata.image,
-										isBondingCurve: data.isBondingCurve
-									});
-							} catch (error) {
-								console.error('Failed to fetch coin data:', error);
-							} finally {
-								setIsCoinDataLoading(false);
-							}
-						} else {
-							console.log('No data available');
-						}
-					// Remove duplicate timestamps and sort in ascending order
-					const uniqueProcessedData = processedData
-						.filter((item: any, index: any, self: any) =>
-							index === self.findIndex((t: any) => t.time === item.time)
-						)
-						.sort((a: any, b: any) => a.time - b.time)
-						.filter((item: any, index: any, self: any) => 
-							index === 0 || item.time > self[index - 1].time
-						)
-					// Filter out equal timestamps, keeping only the first occurrence
-					const filteredData = uniqueProcessedData.filter((item: any, index: number, self: any[]) =>
-						index === self.findIndex((t: any) => t.time === item.time)
-					);
-
-					// Sort the filtered data by timestamp in ascending order
-					const sortedData = filteredData.sort((a: any, b: any) => a.time - b.time);
-					setChartData([]);
-				} else {
-
-				setChartData([]);
-
-				try {
-					const data = selectedCoin
-					console.log(coinData);
-					console.log(lastClose)
-					setCoinData({
-						name: data.mint.metadata.name,
-						symbol: data.mint.metadata.symbol,
-						price: 0,
-						marketCap: data.marketCap,
-						image: data.mint.metadata.image,
-						isBondingCurve: data.isBondingCurve
-					});
-					setIsCoinDataLoading(false);
-					setIsChartDataLoading(false);
-				} catch (error) {
-					console.error('Failed to fetch coin data:', error);
-					// Fetch token metadata using Helius API
-					
-				} finally {
-					setIsCoinDataLoading(false);
-					setIsChartDataLoading(false);
-				}
-			
-					console.error('Failed to fetch OHLCV data:', response.statusText);
-				}
-			} catch (error) {
-				setChartData([]);
-
-				try {
-					const data = selectedCoin
-					console.log(coinData);
-					console.log(lastClose)
-					setCoinData({
-						name: data.mint.metadata.name,
-						symbol: data.mint.metadata.symbol,
-						price: 0,
-						marketCap: data.marketCap,
-						image: data.mint.metadata.image,
-						isBondingCurve: data.isBondingCurve
-					});
-				} catch (error) {
-					console.error('Failed to fetch coin data:', error);
-				} finally {
-					setIsCoinDataLoading(false);
-					setIsChartDataLoading(false);
-				}
-				console.error('Failed to fetch OHLCV data:', error);
-			} finally {
-				setIsChartDataLoading(false);
+	  useEffect(() => {
+		const fetchPair = async () => {
+		  setIsLoading(true);
+		  try {
+			const response = await fetch('/api/pairs/new');
+			if (!response.ok) {
+			  throw new Error('Failed to fetch pair data');
 			}
-		}
+			const pairs: Pair[] = await response.json();
+			console.log(pairs)
+			const foundPair = pairs.find(p => p.mint.address === token);
+			console.log(foundPair)
+			if (foundPair) {
+			  setPair(foundPair);
+			}
+		  } catch (err) {
+			console.error('Error fetching pair:', err);
+		  } finally {
+			setIsLoading(false);
+		  }
+		};
 
+		fetchPair();
+	  }, [token]); // Add token to the dependency array
+
+	  useEffect(() => {
+		const fetchChartData = async () => {
+		  try {
+			const response = await fetch(`/api/ohlcv/${token}`);
+			if (response.ok) {
+			  const rawData = await response.json();
+			  const processedData = rawData.map((item: any) => ({
+				time: Math.floor(item.timestamp * 1000),
+				open: Number(item.open) * 10**9,
+				high: Number(item.high) * 10**9,
+				low: Number(item.low) * 10**9,
+				close: Number(item.close) * 10**9,
+				volume: Number(item.volume)
+			  }));
+
+			  if (processedData.length > 0 && processedData[processedData.length - 1].close != null) {
+				const lastCloseValue = processedData[processedData.length - 1].close;
+				setLastClose(lastCloseValue);
+				setChartData(processedData);
+
+				if (pair) {
+				  setCoinData({
+					...pair,
+					mint: token,
+					programId: pair.programId,
+					name: pair.mint.metadata.name,
+					symbol: pair.mint.metadata.symbol,
+					price: lastCloseValue,
+					marketCap: 0,
+					image: pair.mint.metadata.image,
+					isBondingCurve: pair.isBondingCurve,
+				  });
+				}
+			  } else {
+				setChartData([]);
+				if (pair) {
+				  setCoinData({
+					...pair,
+
+					mint: token,
+					programId: pair.programId,
+					name: pair.mint.metadata.name,
+					symbol: pair.mint.metadata.symbol,
+					price: 0,
+					marketCap: 0,
+					image: pair.mint.metadata.image,
+					isBondingCurve: pair.isBondingCurve
+				  });
+				}
+			  }
+			} else {
+			  throw new Error('Failed to fetch OHLCV data');
+			}
+		  } catch (error) {
+			console.error('Failed to fetch OHLCV data:', error);
+			setChartData([]);
+			if (pair) {
+			  setCoinData({					...pair,
+
+				mint: token,
+				programId: pair.programId,
+				name: pair.mint.metadata.name,
+				symbol: pair.mint.metadata.symbol,
+				price: 0,
+				marketCap: 0,
+				image: pair.mint.metadata.image,
+				isBondingCurve: pair.isBondingCurve
+			  });
+			}
+		  }
+		};
 
 		fetchChartData();
+		const intervalId = setInterval(fetchChartData, 60000); // Fetch every minute
 
-		// Set up intervals to fetch data every 5 minutes
-		const chartDataIntervalId = setInterval(fetchChartData, 1 * 1000);
+		return () => clearInterval(intervalId);
+	  }, [token, pair]); // Add token and pair to the dependency array
 
-		// Clean up intervals on component unmount
-		return () => {
-			clearInterval(chartDataIntervalId);
-		};
-	}, [token]);
+	const chartContainerRef = useRef<HTMLDivElement>(null);
+	const chartRef = useRef<IChartApi | null>(null);
 
 	useEffect(() => {
 		if (!chartContainerRef.current || !chartData) return;
@@ -208,7 +212,7 @@ export default function TokenPage() {
 				low: point.low * priceFactor,
 				close: point.close * priceFactor,
 			}))
-			.sort((a, b) => b.high - a.high); // Sort by highest price descending
+			.sort((a: any, b: any) => b.high - a.high); // Sort by highest price descending
 
 		candlestickSeries.setData(formattedData);
 
@@ -221,7 +225,7 @@ export default function TokenPage() {
 			priceScaleId: '',
 		});
 
-		const volumeData = formattedData.map((d) => ({
+		const volumeData = formattedData.map((d: any) => ({
 			time: d.time,
 			value: 0,
 			color: d.close > d.open ? '#26a69a' : '#ef5350',
@@ -248,7 +252,7 @@ export default function TokenPage() {
 
 	const { activity, isLoading: isActivityLoading, error } = useActivity();
 
-	if (isChartDataLoading || isCoinDataLoading) {
+	if (isLoading || !pair) {
 		return (
 			<div className="flex items-center justify-center h-screen">
 				<Spinner size="lg" />
@@ -271,7 +275,6 @@ export default function TokenPage() {
 			<TvChart
               key={`${token}`} 
               symbol={token} 
-              data={chartData}
               removeChart={() => {}} 
             />
 				</div>
