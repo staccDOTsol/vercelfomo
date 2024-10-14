@@ -86,8 +86,11 @@ export default function Home() {
                       <span>{coin.buys || 'N/A'} buys</span>/<span>{coin.sells || 'N/A'} sells</span>
                     </div>
                   </div>
-                  <Progress value={coin.completed || 0} classNames={{ indicator: "bg-[#9648fe]" }} size="sm" />
-                  <span>{coin.completed || 0}%</span>
+                  <Progress 
+                    value={coin.completed != null ? parseFloat(coin['24h']) || 0 : 0} 
+                    classNames={{ indicator: "bg-[#9648fe]" }} 
+                    size="sm" 
+                  />
                 </div>
               </CardBody>
             </Card>
