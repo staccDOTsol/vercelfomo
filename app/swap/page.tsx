@@ -3,10 +3,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { createJupiterApiClient } from "@jup-ag/api"
+import { Card, CardHeader, CardBody, CardFooter, Button, Input } from "@/components/ui/card"
+import { GitGraphIcon } from "lucide-react"
 import { Connection, VersionedTransaction, PublicKey } from "@solana/web3.js"
-import { Card, CardBody, CardFooter, Button, Input, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react"
-import Image from 'next/image'
-import { Icon } from "@iconify/react"
 
 const jupiterApi = createJupiterApiClient({ basePath: "https://superswap.fomo3d.fun" })
 
@@ -245,9 +244,9 @@ export default function Component() {
   return (
     <div className="w-full h-full flex items-center justify-center">
       <Card className="w-full max-w-[450px] pb-3 bg-[#1c2033] shadow-none">
-        <div className="flex justify-center py-4">
-          <h1 className="text-3xl font-bold text-center">SuperSwap</h1>
-        </div>
+        <CardHeader className="flex justify-center">
+          <h1 className="text-3xl font-bold text-center pt-2">SuperSwap</h1>
+        </CardHeader>
         <CardBody className="pb-0">
           <div className="flex flex-col gap-1.5 items-center px-2">
             <Card className="bg-[#252a3f] border-0 shadow-none py-3 w-full">
@@ -329,7 +328,7 @@ export default function Component() {
             </Card>
 
             <Button onClick={switchTokens} isIconOnly className="w-10 h-10 -mt-6 -mb-6 z-10 bg-[#252a3f] border-[3px] border-[#1c2033]" aria-label="Swap">
-              <Icon icon="mdi:swap-vertical" />
+              <GitGraphIcon />
             </Button>
 
             <Card className="bg-[#252a3f] border-0 shadow-none py-3 w-full">
