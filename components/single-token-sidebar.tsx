@@ -215,7 +215,7 @@ export default function SingleTokenSidebar({
 					configId: ammConfigKey
 				});
 				poolKeys.configId = ammConfigKey;
-				// Initialize Jupiter API
+				// Initialize Jupiter API	
 				// Fetch quote for swapping SOL to tokenA
 				const quoteA = await jupiterApi.quoteGet({
 					inputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
@@ -648,11 +648,14 @@ const ai = await connection.getAccountInfo(tokenMint)
 
 	useEffect(() => {
 		const fetchBalance = async () => {
-			const publicKey = new PublicKey(token.mint)
+			const [publicKey] = PublicKey.findProgramAddressSync(
+                [Buffer.from('bonding-curve'), new PublicKey(token.mint).toBuffer()],
+                new PublicKey(token.programId)
+            )
 			
 			try {
 				const balance = await connection.getBalance(publicKey);
-				const calculatedProgress = (balance / 85* 10 ** 9) ;
+				const calculatedProgress = (balance / (85 * 10 ** 9)) * 100; // Convert to percentage
 				setProgress(Math.min(100, Math.max(0, calculatedProgress))); // Ensure progress is between 0 and 100
 			} catch (error) {
 				console.error("Error fetching balance:", error);
