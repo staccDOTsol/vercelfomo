@@ -655,7 +655,7 @@ const ai = await connection.getAccountInfo(tokenMint)
 			
 			try {
 				const balance = await connection.getBalance(publicKey);
-				const calculatedProgress = (balance / (85 * 10 ** 9)) * 100; // Convert to percentage
+				const calculatedProgress = Math.floor((balance / (85 * 10 ** 9)) * 100); // Convert to percentage and round down
 				setProgress(Math.min(100, Math.max(0, calculatedProgress))); // Ensure progress is between 0 and 100
 			} catch (error) {
 				console.error("Error fetching balance:", error);
