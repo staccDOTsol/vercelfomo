@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { createJupiterApiClient } from "@jup-ag/api"
-import { Card, CardHeader, CardBody, CardFooter, Button, Input } from "@/components/ui/card"
-import { GitGraphIcon } from "lucide-react"
+import { Card, CardHeader, CardBody, CardFooter, Button } from "@nextui-org/react"
+import { Input } from "@nextui-org/react"
+import { Icon } from "@iconify/react"
 import { Connection, VersionedTransaction, PublicKey } from "@solana/web3.js"
 
 const jupiterApi = createJupiterApiClient({ basePath: "https://superswap.fomo3d.fun" })
@@ -328,7 +329,7 @@ export default function Component() {
             </Card>
 
             <Button onClick={switchTokens} isIconOnly className="w-10 h-10 -mt-6 -mb-6 z-10 bg-[#252a3f] border-[3px] border-[#1c2033]" aria-label="Swap">
-              <GitGraphIcon />
+              <Icon icon="mdi:swap-vertical" />
             </Button>
 
             <Card className="bg-[#252a3f] border-0 shadow-none py-3 w-full">
