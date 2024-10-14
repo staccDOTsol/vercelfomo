@@ -1,9 +1,16 @@
 import { Tabs, Tab } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
+import { Key } from "react";
 
-export default function ItemFilterBar() {
+export default function ItemFilterBar({ setActiveFilter }: { setActiveFilter: (filter: string) => void }) {
 	return (
-		<Tabs aria-label="Options" color="primary" variant="bordered" classNames={{ base: "w-full md:w-fit", tabList: "w-full md:w-fit" }}>
+		<Tabs
+      aria-label="Options"
+      color="primary"
+      variant="bordered"
+      classNames={{ base: "w-full md:w-fit", tabList: "w-full md:w-fit" }}
+      onSelectionChange={(key: Key) => setActiveFilter(key.toString())}
+    >
 			<Tab
 				key="trending"
 				title={
