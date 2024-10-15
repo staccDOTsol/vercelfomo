@@ -26,7 +26,7 @@ export default function Component() {
   const [formValue, setFormValue] = useState({
     amount: "1",
     inputMint: "",
-    outputMint: "",
+    outputMint: "BQpGv6LVWG1JRm1NdjerNSFdChMdAULJr3x9t2Swpump", // Set default output token
     slippage: 0.5,
   })
   const [quoteResponse, setQuoteResponse] = useState<any>(null)
@@ -126,37 +126,35 @@ export default function Component() {
 
   const inputToken = useMemo(() => tokens.find(t => t.address === formValue.inputMint) || customInputToken, [tokens, formValue.inputMint, customInputToken])
   const outputToken = useMemo(() => tokens.find(t => t.address === formValue.outputMint) || customOutputToken, [tokens, formValue.outputMint, customOutputToken])
-
-  const fetchQuote = useCallback(async () => {
-    if (!inputToken || !outputToken || !formValue.amount) return
-    setIsLoading(true)
-    setError(null)
-    try {
-      const amount = Math.floor(parseFloat(formValue.amount) * (10 ** (inputToken.decimals || 0)))
-      const quote = await jupiterApi.quoteGet({
-        inputMint: formValue.inputMint,
-        outputMint: formValue.outputMint,
-        amount,
-        slippageBps: Math.floor(formValue.slippage * 100),
-      })
-      setQuoteResponse(quote)
-    } catch (error) {
-      console.error("Failed to fetch quote:", error)
-      setError("Failed to fetch quote. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
-  }, [formValue, inputToken, outputToken])
-
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (formValue.inputMint && formValue.outputMint && formValue.amount) {
-        fetchQuote()
-      }
-    }, 500)
+    const fetchQuote = async () => {
+      const inputToken = tokens.find(t => t.address === formValue.inputMint) || customInputToken;
+      const outputToken = tokens.find(t => t.address === formValue.outputMint) || customOutputToken;
 
-    return () => clearTimeout(debounceTimer)
-  }, [formValue.amount, formValue.inputMint, formValue.outputMint, fetchQuote])
+      if (!inputToken || !outputToken || !formValue.amount) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const amount = Math.floor(parseFloat(formValue.amount) * (10 ** (inputToken.decimals || 0)));
+        const quote = await jupiterApi.quoteGet({
+          inputMint: formValue.inputMint,
+          outputMint: formValue.outputMint,
+          amount,
+          slippageBps: Math.floor(formValue.slippage * 100),
+        });
+        setQuoteResponse(quote);
+      } catch (error) {
+        console.error("Failed to fetch quote:", error);
+        setError("Failed to fetch quote. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (formValue.inputMint && formValue.outputMint && formValue.amount) {
+      fetchQuote();
+    }
+  }, [formValue, tokens, customInputToken, customOutputToken, jupiterApi, setQuoteResponse, setIsLoading, setError]);
 
   const handleSwap = async () => {
     if (!quoteResponse || !wallet.publicKey || !wallet.signTransaction) return
