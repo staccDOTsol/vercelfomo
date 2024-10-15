@@ -40,7 +40,7 @@ export const sidebarItems: SidebarItem[] = [
 	},
 	{
 		key: "portfolio",
-		href: "#",
+		href: "/portfolio",
 		icon: "solar:wallet-2-bold",
 		title: "Portfolio",
 	},

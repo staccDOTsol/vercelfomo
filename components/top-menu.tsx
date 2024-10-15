@@ -22,7 +22,7 @@ export default function TopMenu({ toggleSidebar }: { toggleSidebar: () => void }
       </div>
       <div className="hidden md:flex items-center justify-between gap-1 md:gap-2 w-full p-4">
         <div className="flex flex-1 md:flex-none items-center gap-1 md:gap-2">
-          <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none" aria-label="Portfolio">
+          <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none" onPress={() => router.push("/portfolio")} aria-label="Portfolio">
             <Icon icon="tabler:trending-up" />
             Portfolio
           </Button>
