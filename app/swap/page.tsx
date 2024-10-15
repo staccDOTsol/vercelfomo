@@ -166,7 +166,8 @@ export default function Component() {
       const swapResult = await jupiterApi.swapPost({
         swapRequest: {
           userPublicKey: wallet.publicKey.toBase58(),
-          quoteResponse
+          quoteResponse,
+          wrapAndUnwrapSol: true,
         },
       })
 
