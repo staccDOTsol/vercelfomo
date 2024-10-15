@@ -67,8 +67,8 @@ export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { tog
 				<ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
 					{searchResults.length > 0 ? (
 						<div className="mb-4">
-							{searchResults.map((result, index) => (
-								<Link key={index} href={`/token/${result.address}`}>
+							{searchResults.map((result: any, index: number) => (
+								<Link key={index} href={`/token/${result.mint.address}`}>
 									<SearchResultCard result={result} />
 								</Link>
 							))}
