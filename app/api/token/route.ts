@@ -4,8 +4,17 @@ import Redis from 'ioredis';
 const CACHE_TTL = 3600; // 1 hour
 const CACHE_STALE_TTL = 300; // 5 minutes
 
+let redisClient: Redis | null = null;
+
+function getRedisClient() {
+  if (!redisClient) {
+    redisClient = new Redis(process.env.REDIS_URL as string);
+  }
+  return redisClient;
+}
+
 export async function GET(request: NextRequest) {
-  const redis = new Redis(process.env.REDIS_URL as string);
+  const redis = getRedisClient();
   const searchQuery = request.nextUrl.searchParams.get('search') || '';
 
   try {
@@ -32,8 +41,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to fetch or filter tokens:', error);
     return NextResponse.json({ error: 'Failed to fetch or filter tokens' }, { status: 500 });
-  } finally {
-    redis.disconnect();
   }
 }
 

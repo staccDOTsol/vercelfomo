@@ -50,44 +50,66 @@ export default function Component() {
       const limit = 100
       let hasMore = true
 
+      const maxRetries = 5;
+      const baseDelay = 1000; // 1 second
+
       while (hasMore) {
-        const response = await fetch('https://mainnet.helius-rpc.com/?api-key=0d4b4fd6-c2fc-4f55-b615-a23bab1ffc85', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: `page-${page}`,
-            method: 'getAssetsByOwner',
-            params: {
-              ownerAddress: wallet.publicKey.toBase58(),
-              page: page,
-              limit: limit,
-              displayOptions: { showFungible: true }
-            },
-          }),
-        })
+        let retries = 0;
+        let success = false;
 
-        const { result } = await response.json()
-        
-        if (result.items.length === 0) {
-          hasMore = false
-        } else {
-          const pageTokens = result.items
-            .filter((item: any) => item.interface === 'FungibleToken' || item.interface === 'FungibleAsset')
-            .map((token: any) => {
-              if (!token.content.links?.image) return null
-              return {
-                address: token.id,
-                symbol: token.content.metadata?.symbol || '',
-                name: token.content.metadata?.name || '',
-                decimals: token.token_info?.decimals || 0,
-                logoURI: token.content.links.image,
-                balance: token.token_info?.balance || '0'
-              }
-            })
+        while (retries < maxRetries && !success) {
+          try {
+            const response = await fetch('https://mainnet.helius-rpc.com/?api-key=0d4b4fd6-c2fc-4f55-b615-a23bab1ffc85', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: `page-${page}`,
+                method: 'getAssetsByOwner',
+                params: {
+                  ownerAddress: wallet.publicKey.toBase58(),
+                  page: page,
+                  limit: limit,
+                  displayOptions: { showFungible: true }
+                },
+              }),
+            });
 
-          allTokens = [...allTokens, ...pageTokens.filter(Boolean)]
-          page++
+            const { result } = await response.json();
+            
+            if (result.items.length === 0) {
+              hasMore = false;
+            } else {
+              const pageTokens = result.items
+                .filter((item: any) => item.interface === 'FungibleToken' || item.interface === 'FungibleAsset')
+                .map((token: any) => {
+                  if (!token.content.links?.image) return null;
+                  return {
+                    address: token.id,
+                    symbol: token.content.metadata?.symbol || '',
+                    name: token.content.metadata?.name || '',
+                    decimals: token.token_info?.decimals || 0,
+                    logoURI: token.content.links.image,
+                    balance: token.token_info?.balance || '0'
+                  };
+                });
+
+              allTokens = [...allTokens, ...pageTokens.filter(Boolean)];
+              page++;
+            }
+
+            success = true;
+          } catch (error) {
+            retries++;
+            if (retries === maxRetries) {
+              console.error("Max retries reached. Failed to fetch tokens:", error);
+              setError("Failed to fetch tokens. Please try again.");
+              hasMore = false;
+            } else {
+              const delay = baseDelay * Math.pow(2, retries);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
         }
       }
 
@@ -110,19 +132,20 @@ export default function Component() {
     setIsLoading(true)
     setError(null)
     try {
-      const amount = Math.floor(parseFloat(formValue.amount) * (10 ** inputToken.decimals)).toString()
+      const amount = Math.floor(parseFloat(formValue.amount) * (10 ** (inputToken.decimals || 0)))
       const quote = await jupiterApi.quoteGet({
         inputMint: formValue.inputMint,
         outputMint: formValue.outputMint,
-        amount: Number(amount),
+        amount,
         slippageBps: Math.floor(formValue.slippage * 100),
       })
       setQuoteResponse(quote)
     } catch (error) {
       console.error("Failed to fetch quote:", error)
       setError("Failed to fetch quote. Please try again.")
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }, [formValue, inputToken, outputToken])
 
   useEffect(() => {
@@ -197,78 +220,78 @@ export default function Component() {
   }
 
   const handleSearchTokens = useCallback(
-    async (searchValue: string, isInput: boolean) => {
+    async (searchValue: string, isInput: boolean = true) => {
       const searchFunc = isInput ? setSearchInput : setSearchOutput
       const openFunc = isInput ? setIsInputSelectOpen : setIsOutputSelectOpen
       searchFunc(searchValue)
       
-      const debouncedSearch = debounce(async () => {
-        if (searchValue.length >= 2) {
-          if (!isInput) {
-            try {
-              const response = await fetch(`/api/token?search=${encodeURIComponent(searchValue)}`)
-              if (!response.ok) {
-                throw new Error('Failed to fetch tokens')
-              }
-              let filteredTokens = await response.json()
-              
-              // Fetch images only for top 10 results
-              filteredTokens = filteredTokens.slice(0, 10).map((token:any) => ({
-                ...token,
-                logoURI: token.logoURI // Assuming logoURI is already present
-              }))
-              
-              setTokens(filteredTokens)
-            } catch (error) {
-              console.error('Error fetching tokens:', error)
-              setError('Failed to fetch tokens. Please try again.')
-            }
-          } else {
-            const filteredTokens = tokens.filter(token => 
+      if (searchValue.length >= 1) {
+        try {
+          let filteredTokens: TokenInfo[];
+          if (isInput) {
+            filteredTokens = tokens.filter(token => 
               token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
               token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
               token.address.toLowerCase().includes(searchValue.toLowerCase())
-            ).slice(0, 10) // Limit to top 10 results
-            setTokens(filteredTokens)
+            ).slice(0, 10);
+            setFilteredInputTokens(filteredTokens);
+          } else {
+            const response = await fetch(`/api/token?search=${encodeURIComponent(searchValue)}`);
+            if (!response.ok) {
+              throw new Error('Failed to fetch tokens');
+            }
+            filteredTokens = await response.json();
+            filteredTokens = filteredTokens.slice(0, 10).map((token: any) => ({
+              ...token,
+              logoURI: token.logoURI
+            }));
+            setFilteredOutputTokens(filteredTokens);
           }
-          openFunc(true)
-        } else {
-          fetchTokens() // Reset to all tokens
-          openFunc(false)
+          openFunc(true);
+        } catch (error) {
+          console.error('Error fetching tokens:', error);
+          setError('Failed to fetch tokens. Please try again.');
         }
-      }, 300)
-
-      debouncedSearch()
+      } else {
+        if (isInput) {
+          fetchTokens();
+        } else {
+          setFilteredOutputTokens([]);
+        }
+        openFunc(false);
+      }
     },
-    [tokens, fetchTokens, setSearchInput, setSearchOutput, setIsInputSelectOpen, setIsOutputSelectOpen, setTokens, setError]
-  )
+    [tokens, fetchTokens]
+  );
+
+  const [filteredInputTokens, setFilteredInputTokens] = useState<TokenInfo[]>([]);
+  const [filteredOutputTokens, setFilteredOutputTokens] = useState<TokenInfo[]>([]);
 
   const handleCustomTokenInput = async (searchValue: string, isInput: boolean) => {
-    try {
-      if (PublicKey.isOnCurve(searchValue)) {
-        const tokenInfo = await connection.getParsedAccountInfo(new PublicKey(searchValue))
-        if (tokenInfo.value?.data && 'parsed' in tokenInfo.value.data) {
-          const parsedData = tokenInfo.value.data.parsed
-          const customToken: TokenInfo = {
-            address: searchValue,
-            symbol: parsedData.info.symbol || 'Unknown',
-            name: parsedData.info.name || 'Custom Token',
-            decimals: parsedData.info.decimals || 0,
-            logoURI: '/placeholder.svg', // Use a placeholder image
-            balance: 0,
-          }
-          if (isInput) {
-            setCustomInputToken(customToken)
-            setFormValue(prev => ({ ...prev, inputMint: searchValue }))
-          } else {
-            setCustomOutputToken(customToken)
-            setFormValue(prev => ({ ...prev, outputMint: searchValue }))
-          }
+    if (searchValue.length === 44 || searchValue.length === 32) {
+      try {
+        const response = await fetch(`/api/token?address=${encodeURIComponent(searchValue)}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch custom token info');
         }
+        const tokenInfo: TokenInfo = await response.json();
+        if (isInput) {
+          setCustomInputToken(tokenInfo);
+          setFormValue(prev => ({ ...prev, inputMint: tokenInfo.address }));
+        } else {
+          setCustomOutputToken(tokenInfo);
+          setFormValue(prev => ({ ...prev, outputMint: tokenInfo.address }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch custom token info:", error);
+        setError("Failed to fetch custom token info. Please try again.");
       }
-    } catch (error) {
-      console.error("Failed to fetch custom token info:", error)
-      setError("Failed to fetch custom token info. Please try again.")
+    } else {
+      if (isInput) {
+        setCustomInputToken(null);
+      } else {
+        setCustomOutputToken(null);
+      }
     }
   }
 
@@ -307,7 +330,7 @@ export default function Component() {
                     />
                     {isInputSelectOpen && (
                       <div className="absolute z-10 w-full mt-1 bg-[#1c2033] rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {tokens.map((token) => (
+                        {filteredInputTokens.map((token) => (
                           <div 
                             key={token.address} 
                             className="flex items-center gap-2 p-2 hover:bg-[#252a3f] cursor-pointer"
@@ -390,7 +413,7 @@ export default function Component() {
                     {isOutputSelectOpen && (
                       <div className="absolute z-10 w-full mt-1 bg-[#1c2033] rounded-lg shadow-lg max-h-60 overflow-auto">
                         
-                        {tokens.map((token) => (
+                        {filteredOutputTokens.map((token) => (
                           <div 
                             key={token.address} 
                             className="flex items-center gap-2 p-2 hover:bg-[#252a3f] cursor-pointer"
