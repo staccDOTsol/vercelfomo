@@ -179,7 +179,7 @@ export default function SingleTokenSidebar({
 				ai?.owner || TOKEN_PROGRAM_ID
             );
 
-            const amountLamports = new BN(parseFloat(amount) * 10 ** 9);
+            const  amountLamports = new BN(parseFloat(amount) * 10 ** 9);
 			const ammAcc = await connection.getAccountInfo(bondingCurvePda)
 			const data = ammAcc?.data.slice(8)
 			const amm = new LPAMM(
@@ -189,7 +189,7 @@ export default function SingleTokenSidebar({
 			data?.readBigUInt64LE(24) || BigInt(0),
 			data?.readBigUInt64LE(32) || BigInt(0)
 			)
-
+console.log(token)
 			const { tokenAmount } = amm.getBuyTokensWithSol(BigInt(amountLamports.toString()));
 
 			if (!token.isBondingCurve) {

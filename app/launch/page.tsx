@@ -5962,7 +5962,9 @@ export default function LaunchPage() {
 		  // Fetch the top tokens for the output token list
 		  const response = await fetch('https://superswap.fomo3d.fun/mints')
 		  const data = await response.json();
-		  let mints = data.mints;
+		  let mints = data.liquidity;
+		  // Sort mints by liquidity in descending order
+		  mints = Object.keys(mints)
 		  // Fetch the top tokens list
 		
 		  // If there are no filtered mints, use the original mints array
@@ -5972,6 +5974,99 @@ export default function LaunchPage() {
 			  ...prev,
 			}));
 		  }
+		  try {
+			console.log('Starting token selection process');
+			// Filter mints to only include those from the top tokens list
+			const filteredMints = mints	
+			console.log('Filtered mints:', filteredMints);
+
+			// If there are no filtered mints, use the original mints array
+			mints = filteredMints.length > 0 ? filteredMints : mints;
+			console.log('Final mints array:', mints);
+
+			// Function to get a valid quote
+			const getValidQuote = async (fromMint: string, toMint: string, amount: number) => {
+				try {
+					console.log(`Fetching quote for ${fromMint} to ${toMint} with amount ${amount}`);
+					const quote = await fetchQuote(fromMint, toMint, amount);
+					console.log('Received quote:', quote);
+					if (Number(quote?.outAmount) > amount/2) {
+						console.log('Valid quote found');
+						return quote;
+					}
+					console.log('Invalid quote (outAmount too low)');
+					return null;
+				} catch (error) {
+					console.warn(`Failed to get quote for ${fromMint} to ${toMint}:`, error);
+					return null;
+				}
+			};
+
+			// Function to select a random token pair with valid quotes
+			const selectRandomTokenPair = async () => {
+				console.log('Selecting random token pair');
+				const solAmount = 1000000000; // 1 SOL in lamports
+				const solMint = 'So11111111111111111111111111111111111111112';
+
+				while (true) {
+					const tokenA = mints[Math.floor(Math.random() * mints.length)];
+					let tokenB;
+					do {
+						tokenB = mints[Math.floor(Math.random() * mints.length)];
+					} while (tokenB === tokenA);
+
+					console.log('Trying token pair:', tokenA, tokenB);
+					const quoteA = await getValidQuote(solMint, tokenA, solAmount);
+					const quoteB = await getValidQuote(solMint, tokenB, solAmount);
+
+					if (quoteA && quoteB) {
+						console.log('Valid token pair found');
+						setInputToken(tokenA);
+						setOutputToken(tokenB);
+						setFormValue((prevState: any) => ({
+							...prevState,
+							inputMint: tokenA,
+							outputMint: tokenB,
+						}));
+						console.log('Updated formValue:', formValue);
+						return [tokenA, tokenB];
+					}
+					console.log('Invalid token pair, retrying');
+				}
+			};
+
+			// Select new tokens only if they're not already set
+			if (!inputToken || !outputToken) {
+				console.log('Selecting new tokens');
+				let [newTokenA, newTokenB] = await selectRandomTokenPair();
+
+				console.log('Setting new tokens:', newTokenA, newTokenB);
+				setInputToken(newTokenA);
+				setOutputToken(newTokenB);
+				setFormValue((prevState: any) => ({
+					...prevState,
+					inputMint: newTokenA.address,
+					outputMint: newTokenB.address,
+				}));
+				newTokenA = {address: newTokenA}
+				newTokenB = {address: newTokenB}
+				console.log('Selected token addresses:', newTokenA.address, newTokenB.address);
+				console.log('Updated input token:', newTokenA);
+				console.log('Updated output token:', newTokenB);
+				const randomTokenA = newTokenA;
+				const randomTokenB = newTokenB;
+				console.log('Selected token addresses:', randomTokenA.address, randomTokenB.address);
+
+				formValue.inputMint = randomTokenA.address;
+				formValue.outputMint = randomTokenB.address;
+				console.log('Updated formValue:', formValue);
+			} else {
+				console.log('Tokens already set, skipping selection');
+			}
+		} catch (error) {
+			console.error('Error fetching random tokens:', error);
+		}
+
 		} catch (error) {
 		  console.error("Failed to fetch tokens:", error);
 		}
@@ -6038,83 +6133,6 @@ const [error, setError] = useState<string | null>(null);
         .use(walletAdapterIdentity(wallet as any))
     : null
 
-	useEffect(() => {
-		const fetchRandomTokens = async () => {
-			try {
-				const response = await fetch('https://superswap.fomo3d.fun/mints');
-				const data = await response.json();
-				let mints = data.mints;
-			
-				// Filter mints to only include those from the top tokens list
-				const filteredMints = mints	
-
-				// If there are no filtered mints, use the original mints array
-				 mints = filteredMints.length > 0 ? filteredMints : mints;
-
-				// Function to get a valid quote
-				const getValidQuote = async (fromMint: string, toMint: string, amount: number) => {
-					try {
-						const quote = await fetchQuote(fromMint, toMint, amount);
-						console.log(quote?.outAmount)
-						if (Number(quote?.outAmount) > amount/2) return quote 
-						return null
-					} catch (error) {
-						console.warn(`Failed to get quote for ${fromMint} to ${toMint}.`);
-						return null;
-					}
-				};
-
-				// Function to select a random token pair with valid quotes
-				const selectRandomTokenPair = async () => {
-					const solAmount = 1000000000; // 1 SOL in lamports
-					const solMint = 'So11111111111111111111111111111111111111112';
-
-					while (true) {
-						const tokenA = mints[Math.floor(Math.random() * mints.length)];
-						let tokenB;
-						do {
-							tokenB = mints[Math.floor(Math.random() * mints.length)];
-						} while (tokenB.address === tokenA.address);
-
-						const quoteA = await getValidQuote(solMint, tokenA.address, solAmount);
-						const quoteB = await getValidQuote(solMint, tokenB.address, solAmount);
-
-						if (quoteA && quoteB) {
-							return [tokenA, tokenB];
-						}
-					}
-				};
-
-				// Select new tokens only if they're not already set
-				if (!inputToken || !outputToken) {
-					const [newTokenA, newTokenB] = await selectRandomTokenPair();
-
-					setInputToken(newTokenA);
-					setOutputToken(newTokenB);
-					setFormValue((prevState: any) => ({
-						...prevState,
-						inputMint: newTokenA.address,
-						outputMint: newTokenB.address,
-					}));
-
-					console.log('Selected token addresses:', newTokenA.address, newTokenB.address);
-					console.log('Updated input token:', newTokenA);
-					console.log('Updated output token:', newTokenB);
-					const randomTokenA = newTokenA
-					const randomTokenB = newTokenB
-				console.log('Selected token addresses:', randomTokenA.address, randomTokenB.address);
-
-				formValue.inputMint =randomTokenA.address
-				formValue.outputMint = randomTokenB.address;
-				}
-
-			} catch (error) {
-				console.error('Error fetching random tokens:', error);
-			}
-		};
-
-		fetchRandomTokens();
-	}, []);
 	const aw = useAnchorWallet()
 	const [isCreating, setIsCreating] = useState(false);
 	const handleCreate = useCallback(async (values: any) => {
@@ -6513,10 +6531,12 @@ class LPAMM {
 
 		try {
 			// Swap to tokenA
-			amountA = await swapToToken(inputToken.address);
+			// @ts-ignore
+			amountA = await swapToToken(inputToken.address ? inputToken.address : inputToken);
 
 			// Swap to tokenB
-			amountB = await swapToToken(outputToken.address);
+			// @ts-ignore
+			amountB = await swapToToken(outputToken.address ? outputToken.address : outputToken);
 
 			
 
@@ -6640,8 +6660,10 @@ console.log('Final init amount 1:', initAmount1.toString());
 		  }
 	
 		  const uri = await umi.uploader.uploadJson(metadata)
-		  const tokenAMint = new PublicKey(inputToken.address)
-		  const tokenBMint = new PublicKey(outputToken.address)
+		  // @ts-ignore
+		  const tokenAMint = new PublicKey(inputToken.address ? inputToken.address : inputToken)
+		  // @ts-ignore
+		  const tokenBMint = new PublicKey(outputToken.address ? outputToken.address : outputToken)
 		  const isFront = new BN(tokenAMint.toBuffer()).lte(
 		      new BN(tokenBMint.toBuffer()))
 	
@@ -6674,8 +6696,8 @@ console.log('Final init amount 1:', initAmount1.toString());
 		  }
 	
 		  // Set the program IDs based on the account owners
-		  tokenAInfo.programId = mintAAccountInfo.owner.toBase58();
-		  tokenBInfo.programId = mintBAccountInfo.owner.toBase58();
+		  const tokenAInfoprogramId = mintAAccountInfo.owner.toBase58();
+		  const tokenBInfoprogramId = mintBAccountInfo.owner.toBase58();
 		  const startTimeValue = Math.floor(Date.now() / 1000)
 	
 		  const instructions = [
@@ -6693,19 +6715,19 @@ console.log('Final init amount 1:', initAmount1.toString());
 				mintA,
 				wallet.publicKey,
 				true,
-				(new PublicKey(tokenAInfo?.programId) || TOKEN_PROGRAM_ID )
+				(new PublicKey(tokenAInfoprogramId) || TOKEN_PROGRAM_ID )
 			  ),
 			  getAssociatedTokenAddressSync(
 				mintB,
 				wallet.publicKey,
 				true,
-				(new PublicKey(tokenBInfo?.programId) || TOKEN_PROGRAM_ID )
+				(new PublicKey(tokenBInfoprogramId) || TOKEN_PROGRAM_ID )
 			  ),
 			  getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey, true, TOKEN_PROGRAM_ID),
 			  poolKeys.vaultA,
 			  poolKeys.vaultB,
-			  (new PublicKey(tokenAInfo?.programId) || TOKEN_PROGRAM_ID ),
-			  (new PublicKey(tokenBInfo?.programId) || TOKEN_PROGRAM_ID ),
+			  (new PublicKey(tokenAInfoprogramId) || TOKEN_PROGRAM_ID ),
+			  (new PublicKey(tokenBInfoprogramId) || TOKEN_PROGRAM_ID ),
 			  poolKeys.observationId,
 			  tokenAAmount,
 			  tokenBAmount,
@@ -6738,8 +6760,8 @@ console.log('Final init amount 1:', initAmount1.toString());
 		  })
 	
 	
-		  const tokenAAccount = await getAssociatedTokenAddressSync(mintA, wallet.publicKey, true, new PublicKey(tokenAInfo.programId) || TOKEN_PROGRAM_ID);
-		  const tokenBAccount = await getAssociatedTokenAddressSync(mintB, wallet.publicKey, true, new PublicKey(tokenBInfo.programId) || TOKEN_PROGRAM_ID);
+		  const tokenAAccount = await getAssociatedTokenAddressSync(mintA, wallet.publicKey, true, new PublicKey(tokenAInfoprogramId) || TOKEN_PROGRAM_ID);
+		  const tokenBAccount = await getAssociatedTokenAddressSync(mintB, wallet.publicKey, true, new PublicKey(tokenBInfoprogramId) || TOKEN_PROGRAM_ID);
 	  
 		  let preInstructions = [];
 	  
@@ -6751,7 +6773,7 @@ console.log('Final init amount 1:', initAmount1.toString());
 				tokenAAccount,
 				wallet.publicKey,
 				mintA,
-				new PublicKey(tokenAInfo.programId) || TOKEN_PROGRAM_ID
+				new PublicKey(tokenAInfoprogramId) || TOKEN_PROGRAM_ID
 			  )
 			);
 		  }
@@ -6764,7 +6786,7 @@ console.log('Final init amount 1:', initAmount1.toString());
 				tokenBAccount,
 				wallet.publicKey,
 				mintB,
-				new PublicKey(tokenBInfo.programId) || TOKEN_PROGRAM_ID
+				new PublicKey(tokenBInfoprogramId) || TOKEN_PROGRAM_ID
 			  )
 			);
 		  }
@@ -6781,7 +6803,7 @@ console.log('Final init amount 1:', initAmount1.toString());
 		  setSuccess(`Pool creation successful: https://solscan.io/tx/${txid}`)
 		  // Redirect to the token page
 		  if (typeof window !== 'undefined') {
-			window.location.href = `/token/${mintA.toBase58()}`;
+			window.location.href = `/token/${poolKeys.lpMint.toBase58()}`;
 		  }
 		  setPoolExists(true)
 		} catch (error) {
