@@ -8,11 +8,12 @@ export default function ItemFilterBar({ setActiveFilter }: { setActiveFilter: (f
       aria-label="Options"
       color="primary"
       variant="bordered"
-      classNames={{ base: "w-screen overflow-x-auto md:w-fit", tabList: "w-full md:w-fit" }}
+      classNames={{ base: "w-full overflow-x-auto md:w-fit", tabList: "w-full md:w-fit" }}
       onSelectionChange={(key: Key) => setActiveFilter(key.toString())}
     >
 			<Tab
 				key="trending"
+        className="p-1 md:p-2"
 				title={
 					<div className="flex items-center space-x-1 md:space-x-2">
 						<Icon icon="tabler:trending-up" />
@@ -22,6 +23,7 @@ export default function ItemFilterBar({ setActiveFilter }: { setActiveFilter: (f
 			/>
 			<Tab
 				key="top"
+        className="p-1 md:p-2"
 				title={
 					<div className="flex items-center space-x-1 md:space-x-2">
 						<Icon icon="tabler:trending-up" />
@@ -31,6 +33,7 @@ export default function ItemFilterBar({ setActiveFilter }: { setActiveFilter: (f
 			/>
 			<Tab
 				key="rising"
+        className="p-1 md:p-2"
 				title={
 					<div className="flex items-center space-x-1 md:space-x-2">
 						<Icon icon="solar:chart-2-bold" />
@@ -40,6 +43,7 @@ export default function ItemFilterBar({ setActiveFilter }: { setActiveFilter: (f
 			/>
 			<Tab
 				key="new"
+        className="p-1 md:p-2"
 				title={
 					<div className="flex items-center space-x-1 md:space-x-2">
 						<Icon icon="solar:leaf-bold" />

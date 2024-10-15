@@ -53,7 +53,7 @@ export default function Home() {
           </div>
 
           <section className="p-4">
-            <div className="pb-4">
+            <div className="pb-4 w-full">
               <ItemFilterBar setActiveFilter={setActiveFilter} />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
