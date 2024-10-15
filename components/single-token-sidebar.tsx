@@ -648,7 +648,10 @@ const ai = await connection.getAccountInfo(tokenMint)
 
 	useEffect(() => {
 		const fetchBalance = async () => {
-			const publicKey = new PublicKey(token.mint)
+			const publicKey =  PublicKey.findProgramAddressSync(
+                [Buffer.from('bonding-curve'), new PublicKey(token.mint).toBuffer()],
+                new PublicKey(token.programId)
+            )[0]
 			
 			try {
 				const balance = await connection.getBalance(publicKey);
