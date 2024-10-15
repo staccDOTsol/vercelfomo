@@ -6010,7 +6010,7 @@ export default function LaunchPage() {
 
 				while (true) {
 					const tokenA = mints[Math.floor(Math.random() * mints.length)];
-					let tokenB;
+					let tokenB: any;
 					do {
 						tokenB = mints[Math.floor(Math.random() * mints.length)];
 					} while (tokenB === tokenA);
