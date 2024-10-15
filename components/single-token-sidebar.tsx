@@ -108,6 +108,7 @@ export default function SingleTokenSidebar({
 	token,
 }: {
 	token: {
+		completed: number;
 		baseTokenMint: string;
 		quoteTokenMint: string;
 		mint: string;
@@ -644,29 +645,8 @@ const ai = await connection.getAccountInfo(tokenMint)
 		return () => clearInterval(intervalId);
 	}, []);
 	const router = useRouter();
-	const [progress, setProgress] = useState(0);
+	const [progress, setProgress] = useState(token.completed);
 
-	useEffect(() => {
-		const fetchBalance = async () => {
-			const publicKey =  PublicKey.findProgramAddressSync(
-                [Buffer.from('bonding-curve'), new PublicKey(token.mint).toBuffer()],
-                new PublicKey(token.programId)
-            )[0]
-			
-			try {
-				const balance = await connection.getBalance(publicKey);
-				const calculatedProgress = (balance / 85* 10 ** 9) ;
-				setProgress(Math.min(100, Math.max(0, calculatedProgress))); // Ensure progress is between 0 and 100
-			} catch (error) {
-				console.error("Error fetching balance:", error);
-			}
-		};
-
-		fetchBalance();
-		const intervalId = setInterval(fetchBalance, 60000); // Update every minute
-
-		return () => clearInterval(intervalId);
-	}, []);
 	console.log(token)
 	return (
 		<>
