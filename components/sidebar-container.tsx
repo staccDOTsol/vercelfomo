@@ -5,14 +5,31 @@ import { Icon } from "@iconify/react";
 import Sidebar from "@/components/sidebar";
 import Logo from "@/app/assets/images/logo_color.svg";
 import { useWallet } from "@solana/wallet-adapter-react";
-
+import { useState, useEffect } from "react";
+import useDebounce from "@/app/hooks/useDebounce";
 import { sidebarItems } from "@/local-data/sidebar-items";
 
 import { Button, Input, ScrollShadow, Spacer, User } from "@nextui-org/react";
 import { WalletDisconnectButton, WalletModalButton } from "@solana/wallet-adapter-react-ui";
+import SearchResultCard from "./SearchResultCard";
 
 export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { toggleSidebar: () => void; isSidebarOpen: boolean }) {
-  const { connected } = useWallet();
+	const { connected } = useWallet();
+
+	const [searchQuery, setSearchQuery] = useState("");
+	const debouncedSearchQuery = useDebounce(searchQuery, 300);
+	const [searchResults, setSearchResults] = useState([]);
+
+	useEffect(() => {
+		if (debouncedSearchQuery) {
+			fetch(`/api/pairs/new?search=${encodeURIComponent(debouncedSearchQuery)}`)
+				.then(response => response.json())
+				.then(data => setSearchResults(data))
+				.catch(error => console.error('Error fetching search results:', error));
+		} else {
+			setSearchResults([]);
+		}
+	}, [debouncedSearchQuery]);
 
 	return (
 		<>
@@ -42,13 +59,27 @@ export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { tog
 						labelPlacement="outside"
 						placeholder="Search..."
 						startContent={<Icon className="text-default-500 [&>g]:stroke-[2px]" icon="solar:magnifer-linear" width={18} />}
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
 					/>
 				</div>
 
 				<ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
-					<Sidebar isSidebarOpen={isSidebarOpen} items={sidebarItems} toggleSidebar={toggleSidebar} />
+					{searchResults.length > 0 ? (
+						<div className="mb-4">
+							{searchResults.map((result, index) => (
+								<Link key={index} href={`/token/${result.address}`}>
+									<SearchResultCard result={result} />
+								</Link>
+							))}
+						</div>
+					) : (
+						<Sidebar isSidebarOpen={isSidebarOpen} items={sidebarItems} toggleSidebar={toggleSidebar} />
+					)}
 					<Spacer y={8} />
 				</ScrollShadow>
+
+				<Spacer y={8} />
 
 				{connected ? <WalletDisconnectButton /> : <WalletModalButton />}
 			</div>
