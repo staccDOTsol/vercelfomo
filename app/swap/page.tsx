@@ -159,7 +159,7 @@ export default function Component() {
 
   const handleSwap = async () => {
     if (!quoteResponse || !wallet.publicKey || !wallet.signTransaction) return
-    setIsLoading(true)
+    setIsLoading(true)  
     setError(null)
 
     try {
@@ -253,14 +253,14 @@ export default function Component() {
         }
       } else {
         if (isInput) {
-          fetchTokens();
+          setFilteredInputTokens(tokens.slice(0, 10));
         } else {
           setFilteredOutputTokens([]);
         }
         openFunc(false);
       }
     },
-    [tokens, fetchTokens]
+    [tokens, setError]
   );
 
   const handleInputFocus = () => {
@@ -441,7 +441,6 @@ export default function Component() {
                     />
                     {isOutputSelectOpen && (
                       <div className="absolute z-10 w-full mt-1 bg-[#1c2033] rounded-lg shadow-lg max-h-60 overflow-auto">
-                        
                         {filteredOutputTokens.map((token) => (
                           <div 
                             key={token.address} 
@@ -454,6 +453,7 @@ export default function Component() {
                               }))
                               setSearchOutput(token.symbol)
                               setIsOutputSelectOpen(false)
+                              setCustomOutputToken(token)  // Add this line to set the custom output token
                             }}
                           >
                             <img src={token.logoURI} alt={token.symbol} className="w-6 h-6 rounded-full" />
