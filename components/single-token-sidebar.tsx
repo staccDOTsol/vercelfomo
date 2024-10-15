@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import SidebarStats from "@/components/sidebar-stats";
 import SlippageInput from "@/components/slippage-input";
 import AmountInput from "@/components/amount-input";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createAssociatedTokenAccountInstruction, TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { AddressLookupTableAccount, ComputeBudgetProgram, Connection, PublicKey, SystemProgram, SYSVAR_RECENT_BLOCKHASHES_PUBKEY, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction} from '@solana/web3.js'
 import { BN } from "bn.js";
@@ -122,7 +122,27 @@ export default function SingleTokenSidebar({
 		programId: string
 	};
 }) {
-	
+	const fetchQuote = useCallback(async (inputMint: string, outputMint: string, amount: number) => {
+		if (!inputMint || !outputMint || !amount) return null;
+		try {
+		  const quote = await jupiterApi.quoteGet({
+			inputMint: inputMint,
+			outputMint: outputMint,
+			amount: amount/2,
+			slippageBps: 1000, // 1% slippage
+		  });
+		  return quote;
+		} catch (error) {
+		  const jupiterApi2 = createJupiterApiClient()
+		  const quote = await jupiterApi2.quoteGet({
+			  inputMint: inputMint,
+			  outputMint: outputMint,
+			  amount: amount/2,
+			  slippageBps: 1000, // 1% slippage
+			});	
+		  return quote;
+		}
+	  }, []);
 
 	const [solusdc, setSolusdc] = useState(150);
     const [sellAmount, setSellAmount] = useState('');
@@ -216,42 +236,107 @@ console.log(token)
 					configId: ammConfigKey
 				});
 				poolKeys.configId = ammConfigKey;
+				
 				// Initialize Jupiter API
 				// Fetch quote for swapping SOL to tokenA
-				const quoteA = await jupiterApi.quoteGet({
-					inputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
-					outputMint: mintA.toString(),
-					amount: Number(amountLamports),
-					slippageBps: 1000, // 1% slippage
-				});
+				const quoteA = await fetchQuote(
+					'So11111111111111111111111111111111111111112', // SOL mint address
+					mintA.toString(),
+					Number(amountLamports)
+				);
 				
 				// Fetch quote for swapping SOL to tokenB
-				const quoteB = await jupiterApi.quoteGet({
-					inputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
-					outputMint: mintB.toString(),
-					amount: Number(amountLamports),
-					slippageBps: 1000, // 1% slippage
-				});
+				const quoteB = await fetchQuote(
+					'So11111111111111111111111111111111111111112', // SOL mint address
+					mintB.toString(),
+					Number(amountLamports)
+				);
 				
 				if (!quoteA || !quoteB) {
 					throw new Error('Failed to fetch quotes');
 				}
+				
+async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxIterations: number = 500) {
+    const response = await fetch('https://superswap.fomo3d.fun/deposit-estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            token_0_amount: Number(targetAmount0.toString()),
+            token_1_amount: Number(targetAmount1.toString()),
+            pool_address: poolKeys.poolId.toString()
+        }),
+        })
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch init amounts");
+    }
+
+    return await response.json();
+}
+let initAmount0 = BigInt(0);
+let initAmount1 = BigInt(0);
+let result;
+try {
+    const targetAmountA = BigInt(quoteA.outAmount);
+    const targetAmountB = BigInt(quoteB.outAmount);
+    result = await getInitAmounts(targetAmountA, targetAmountB);
+    console.log('Init amounts result:', result);
+
+     initAmount0 = BigInt(result.token_0_amount	 );
+     initAmount1 = BigInt(result.token_1_amount);
+
+    console.log('Final init amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
+    console.log('Iterations taken:', result.iterations);
+
+    // Use initAmount0 and initAmount1 for further processing if needed
+} catch (error) {
+    console.error('Error getting init amounts:', error);
+    // Handle the error appropriately, maybe set an error state or show a notification
+    throw new Error('Failed to calculate initial amounts');
+}
+				if (!quoteA || !quoteB) {
+					throw new Error('Failed to fetch quotes');
+				}
+				let swapResultA;
+				let swapResultB;
+				try { 
 				// Perform swaps
-				const swapResultA = await jupiterApi.swapPost({
+				 swapResultA = await jupiterApi.swapPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteA,
 						wrapAndUnwrapSol: true
 					},
 				});
-				const swapResultB = await jupiterApi.swapPost({
+				} catch (error) {
+					const jupiterApi2 = createJupiterApiClient()
+					 swapResultA = await jupiterApi2.swapPost({
+						swapRequest: {
+							userPublicKey: wallet.publicKey.toBase58(),
+							quoteResponse: quoteA,
+							wrapAndUnwrapSol: true
+						},
+					});
+				}
+				try { 
+				 swapResultB = await jupiterApi.swapPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
 						wrapAndUnwrapSol: true
 					},
 				});
-				// Deserialize the swap transactions
+			} catch (error) {
+				const jupiterApi2 = createJupiterApiClient()
+				 swapResultB = await jupiterApi2.swapPost({
+					swapRequest: {
+						userPublicKey: wallet.publicKey.toBase58(),
+						quoteResponse: quoteB,
+						wrapAndUnwrapSol: true
+					},
+				});
+				console.error('Error during swap:', error);
+			}
 				const swapTransactionA = Buffer.from(swapResultA.swapTransaction, 'base64');
 				const swapTransactionB = Buffer.from(swapResultB.swapTransaction, 'base64');
 				
@@ -290,9 +375,9 @@ console.log(token)
 					mintA,
 					mintB,
 					poolKeys.lpMint,
-					new BN(0), // LP amount, 0 for single-sided deposit
-					tokenAAmount,
-					tokenBAmount,
+                    new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1))),
+					new BN(Number.MAX_SAFE_INTEGER),
+					new BN(Number.MAX_SAFE_INTEGER),
 					// @ts-ignore
 					(await connection.getAccountInfo(poolKeys.vaultA)).owner,
 					// @ts-ignore
@@ -449,10 +534,49 @@ const ai = await connection.getAccountInfo(tokenMint)
                     true,
                     TOKEN_PROGRAM_ID_2022
                 );
-
                 // Fetch initial token balances
                 const initialBaseBalance = await connection.getTokenAccountBalance(userBaseTokenAccount);
                 const initialQuoteBalance = await connection.getTokenAccountBalance(userQuoteTokenAccount);
+
+                async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxIterations: number = 500) {
+                    const response = await fetch('https://superswap.fomo3d.fun/withdraw-estimate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            token_0_amount: Number(targetAmount0.toString()),
+                            token_1_amount: Number(targetAmount1.toString()),
+                            pool_address: poolKeys.poolId.toString()
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch init amounts");
+                    }
+
+                    return await response.json();
+                }
+
+                let initAmount0 = BigInt(0);
+                let initAmount1 = BigInt(0);
+                let result;
+                try {
+                    const targetAmountA = BigInt(sellAmountLamports.toString());
+                    const targetAmountB = BigInt(0); // Assuming we're only selling one token
+                    result = await getInitAmounts(targetAmountA, targetAmountB);
+                    console.log('Init amounts result:', result);
+
+                    initAmount0 = BigInt(result.token_0_amount);
+                    initAmount1 = BigInt(result.token_1_amount);
+
+                    console.log('Final init amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
+                    console.log('Iterations taken:', result.iterations);
+
+                    // Use initAmount0 and initAmount1 for further processing if needed
+                } catch (error) {
+                    console.error('Error getting init amounts:', error);
+                    // Handle the error appropriately, maybe set an error state or show a notification
+                    throw new Error('Failed to calculate initial amounts');
+                }
 
                 // Perform withdraw instruction
                 const withdrawIx = makeWithdrawCpmmInInstruction(
@@ -468,7 +592,7 @@ const ai = await connection.getAccountInfo(tokenMint)
                     mintA,
                     mintB,
                     poolKeys.lpMint,
-                    new BN(sellAmountLamports.toString()),
+                    new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1))),
                     new BN(0),
                     new BN(0),
                     (await connection.getAccountInfo(poolKeys.vaultA))!.owner,
@@ -477,53 +601,67 @@ const ai = await connection.getAccountInfo(tokenMint)
 
                 // Create and send transaction
                 const withdrawTx = new Transaction()
-				
-				.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333}))
-				.add(withdrawIx);
+                    .add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333}))
+                    .add(withdrawIx);
                 const withdrawSignature = await wallet.sendTransaction(withdrawTx, connection);
                 await connection.confirmTransaction(withdrawSignature, 'confirmed');
 
                 // Fetch final token balances
-                const finalBaseBalance = await connection.getTokenAccountBalance(userBaseTokenAccount);
-                const finalQuoteBalance = await connection.getTokenAccountBalance(userQuoteTokenAccount);
+                const finalBaseBalance = initAmount0
+                const finalQuoteBalance = initAmount1
 
                 // Calculate the actual amounts of tokens withdrawn
-                const baseTokenAmountWithdrawn = new BN(finalBaseBalance.value.amount).sub(new BN(initialBaseBalance.value.amount));
-                const quoteTokenAmountWithdrawn = new BN(finalQuoteBalance.value.amount).sub(new BN(initialQuoteBalance.value.amount));
-
+                const baseTokenAmountWithdrawn = new BN(finalBaseBalance.toString());
+                const quoteTokenAmountWithdrawn = new BN(finalQuoteBalance.toString());
+				
                 // Fetch quotes for swapping both base and quote tokens to SOL
-                const quoteBase = await jupiterApi.quoteGet({
-                    inputMint: token.baseTokenMint,
-                    outputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
-                    amount: baseTokenAmountWithdrawn.toNumber(),
-                    slippageBps: 1000, // 1% slippage
-                });
+                const quoteBase = await fetchQuote(token.baseTokenMint, 'So11111111111111111111111111111111111111112', baseTokenAmountWithdrawn.toNumber())
 
-                const quoteQuote = await jupiterApi.quoteGet({
-                    inputMint: token.quoteTokenMint,
-                    outputMint: 'So11111111111111111111111111111111111111112', // SOL mint address
-                    amount: quoteTokenAmountWithdrawn.toNumber(),
-                    slippageBps: 1000, // 1% slippage
-                });
+                const quoteQuote = await fetchQuote(token.quoteTokenMint, 'So11111111111111111111111111111111111111112', quoteTokenAmountWithdrawn.toNumber())
 
                 if (!quoteBase || !quoteQuote) {
                     throw new Error('Failed to fetch quotes for token swaps');
                 }
                 // Perform swaps
-                const swapResultBase = await jupiterApi.swapPost({
-                    swapRequest: {
-                        userPublicKey: wallet.publicKey.toBase58(),
-                        quoteResponse: quoteBase,
-                        wrapAndUnwrapSol: true
-                    },
-                });
-                const swapResultQuote = await jupiterApi.swapPost({
-                    swapRequest: {
-                        userPublicKey: wallet.publicKey.toBase58(),
-                        quoteResponse: quoteQuote,
-                        wrapAndUnwrapSol: true
-                    },
-                });
+                let swapResultBase;
+                let swapResultQuote;
+                try { 
+                    swapResultBase = await jupiterApi.swapPost({
+                        swapRequest: {
+                            userPublicKey: wallet.publicKey.toBase58(),
+                            quoteResponse: quoteBase,
+                            wrapAndUnwrapSol: true
+                        },
+                    });
+                } catch (error) {
+                    const jupiterApi2 = createJupiterApiClient()
+                    swapResultBase = await jupiterApi2.swapPost({
+                        swapRequest: {
+                            userPublicKey: wallet.publicKey.toBase58(),
+                            quoteResponse: quoteBase,
+                            wrapAndUnwrapSol: true
+                        },
+                    });
+                }
+                try { 
+                    swapResultQuote = await jupiterApi.swapPost({
+                        swapRequest: {
+                            userPublicKey: wallet.publicKey.toBase58(),
+                            quoteResponse: quoteQuote,
+                            wrapAndUnwrapSol: true
+                        },
+                    });
+                } catch (error) {
+                    const jupiterApi2 = createJupiterApiClient()
+                    swapResultQuote = await jupiterApi2.swapPost({
+                        swapRequest: {
+                            userPublicKey: wallet.publicKey.toBase58(),
+                            quoteResponse: quoteQuote,
+                            wrapAndUnwrapSol: true
+                        },
+                    });
+                    console.error('Error during swap:', error);
+                }
                 // Deserialize the swap transactions
                 const swapTransactionBase = Buffer.from(swapResultBase.swapTransaction, 'base64');
                 const swapTransactionQuote = Buffer.from(swapResultQuote.swapTransaction, 'base64');
@@ -624,26 +762,6 @@ const ai = await connection.getAccountInfo(tokenMint)
     };
 	const [amount, setAmount] = useState("");
 
-	useEffect(() => {
-		const fetchSolUsdcPrice = async () => {
-			try {
-				const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-				if (response.ok) {
-					const data = await response.json();
-					setSolusdc(data.solana.usd);
-				} else {
-					console.error('Failed to fetch SOL/USDC price');
-				}
-			} catch (error) {
-				console.error('Error fetching SOL/USDC price:', error);
-			}
-		};
-
-		fetchSolUsdcPrice();
-		const intervalId = setInterval(fetchSolUsdcPrice, 60000); // Update every minute
-
-		return () => clearInterval(intervalId);
-	}, []);
 	const router = useRouter();
 	const [progress, setProgress] = useState(token.completed);
 

@@ -14,7 +14,7 @@ import DexOption from "@/components/dex-option";
 import { createJupiterApiClient } from "@jup-ag/api";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { useAnchorWallet, useWallet } from "@solana/wallet-adapter-react";
-import { CREATE_CPMM_POOL_PROGRAM, getCreatePoolKeys, makeCreateCpmmPoolInInstruction, makeInitializeMetadata, METADATA_PROGRAM_ID, TokenInfo } from "tokengobbler";
+import { CREATE_CPMM_POOL_PROGRAM, getCreatePoolKeys, makeCreateCpmmPoolInInstruction, makeInitializeMetadata, METADATA_PROGRAM_ID } from "tokengobbler";
 import { ComputeBudgetProgram, Connection, Keypair, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, VersionedTransaction } from "@solana/web3.js";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { irysUploader } from "@metaplex-foundation/umi-uploader-irys";
@@ -5835,6 +5835,8 @@ export default function LaunchPage() {
 			description: "",
 			website: "",
 			twitter: "",
+			tokenA: "",
+			tokenB: "",
 			telegram: "",
 			discord: "",
 			otherLink: "",
@@ -5878,8 +5880,8 @@ export default function LaunchPage() {
   
 	const wallet = useWallet()
 	const [isLoading, setIsLoading] = useState(false)
-	const [tokens, setTokens] = useState<TokenInfo[]>([])
-	const [allTokens, setAllTokens] = useState<TokenInfo[]>([]);
+	const [tokens, setTokens] = useState<any[]>([])
+	const [allTokens, setAllTokens] = useState<any[]>([]);
 	const [formValue, setFormValue] = useState({
 	  amount: "1",
 	  inputMint: "",
@@ -5889,190 +5891,96 @@ export default function LaunchPage() {
 	const [quoteResponse, setQuoteResponse] = useState<any>(null)
 	const [searchInput, setSearchInput] = useState("")
 	const [searchOutput, setSearchOutput] = useState("")
-  const [inputToken, setInputToken] = useState<TokenInfo | null>(null);
-  const [outputToken, setOutputToken] = useState<TokenInfo | null>(null);
+  const [inputToken, setInputToken] = useState<any | null>(null);
+  const [outputToken, setOutputToken] = useState<any | null>(null);
   
 	const endpoint = "https://rpc.ironforge.network/mainnet?apiKey=01HRZ9G6Z2A19FY8PR4RF4J4PW"
 	const connection = new Connection(endpoint)
   
-	useEffect(() => {
-	  const fetchTokens = async () => {
-		if (!wallet.publicKey) return;
-  
+	const fetchTokens = useCallback(async () => {
+		if (!wallet.publicKey) return
+	
 		try {
-		  // Fetch the user's token balances
-		  let userTokens: TokenInfo[] = [];
-		  let page = 1;
-		  const limit = 100;
-		  let hasMore = true;
-  
+		  let allTokens: any[] = []
+		  let page = 1
+		  const limit = 100
+		  let hasMore = true
+	
+		  const maxRetries = 5;
+		  const baseDelay = 1000; // 1 second
+	
 		  while (hasMore) {
-			const response = await fetch('https://mainnet.helius-rpc.com/?api-key=0d4b4fd6-c2fc-4f55-b615-a23bab1ffc85', {
-			  method: 'POST',
-			  headers: {
-				'Content-Type': 'application/json',
-			  },
-			  body: JSON.stringify({
-				jsonrpc: '2.0',
-				id: `page-${page}`,
-				method: 'getAssetsByOwner',
-				params: {
-				  ownerAddress: wallet.publicKey.toBase58(),
-				  page: page,
-				  limit: limit,
-				  displayOptions: {
-					showFungible: true
-				  }
-				},
-			  }),
-			});
-  
-			const { result } = await response.json();
-			
-			if (result.items.length === 0) {
-			  hasMore = false;
-			} else {
-			  const pageTokens = result.items
-				.filter((item: any) => item.interface === 'FungibleToken' || item.interface === 'FungibleAsset')
-				.map((token: any) => {
-				  return {
-					address: token.id,
-					balance: token.token_info?.balance || '0',
-					symbol: token.symbol || token.content?.metadata?.symbol || '',
-					name: token.content?.metadata?.name || '',
-					decimals: token.token_info?.decimals || 0,
-					logoURI: token.content?.links?.image || '',
-				  };
+			let retries = 0;
+			let success = false;
+	
+			while (retries < maxRetries && !success) {
+			  try {
+				const response = await fetch('https://mainnet.helius-rpc.com/?api-key=0d4b4fd6-c2fc-4f55-b615-a23bab1ffc85', {
+				  method: 'POST',
+				  headers: { 'Content-Type': 'application/json' },
+				  body: JSON.stringify({
+					jsonrpc: '2.0',
+					id: `page-${page}`,
+					method: 'getAssetsByOwner',
+					params: {
+					  ownerAddress: wallet.publicKey.toBase58(),
+					  page: page,
+					  limit: limit,
+					  displayOptions: { showFungible: true }
+					},
+				  }),
 				});
-  
-			  userTokens = [...userTokens, ...pageTokens];
-			  
-			  if (page === 1 && pageTokens.length > 1) {
-				setFormValue((prev:any) => ({
-				  ...prev,
-				}));
+	
+				const { result } = await response.json();
+				
+				if (result.items.length === 0) {
+				  hasMore = false;
+				} else {
+				  const pageTokens = result.items
+					.filter((item: any) => item.interface === 'FungibleToken' || item.interface === 'FungibleAsset')
+					.map((token: any) => {
+					  if (!token.content.links?.image) return null;
+					  return {
+						address: token.id,
+						symbol: token.content.metadata?.symbol || '',
+						name: token.content.metadata?.name || '',
+						decimals: token.token_info?.decimals || 0,
+						logoURI: token.content.links.image,
+						balance: token.token_info?.balance || '0'
+					  };
+					});
+	
+				  allTokens = [...allTokens, ...pageTokens.filter(Boolean)];
+				  page++;
+				}
+	
+				success = true;
+			  } catch (error) {
+				retries++;
+				if (retries === maxRetries) {
+				  console.error("Max retries reached. Failed to fetch tokens:", error);
+				  setError("Failed to fetch tokens. Please try again.");
+				  hasMore = false;
+				} else {
+				  const delay = baseDelay * Math.pow(2, retries);
+				  await new Promise(resolve => setTimeout(resolve, delay));
+				}
 			  }
-			  
-			  page++;
 			}
 		  }
-  
-		  setTokens(userTokens.filter(token => token !== null));
-  
-		  // Fetch the top tokens for the output token list
-		  const response = await fetch('https://superswap.fomo3d.fun/mints')
-		  const data = await response.json();
-		  let mints = data.liquidity;
-		  // Sort mints by liquidity in descending order
-		  mints = Object.keys(mints)
-		  // Fetch the top tokens list
+	
+		  setTokens(allTokens)
+		} catch (error) {
+		  console.error("Failed to fetch tokens:", error)
+		  setError("Failed to fetch tokens. Please try again.")
+		}
+	  }, [wallet.publicKey])
+
+
+	  useEffect(() => {
+		fetchTokens()
+	  }, [fetchTokens])
 		
-		  // If there are no filtered mints, use the original mints array
-		  setAllTokens(mints);
-		  if (userTokens.length > 1) {
-			setFormValue((prev:any)=> ({
-			  ...prev,
-			}));
-		  }
-		  try {
-			console.log('Starting token selection process');
-			// Filter mints to only include those from the top tokens list
-			const filteredMints = mints	
-			console.log('Filtered mints:', filteredMints);
-
-			// If there are no filtered mints, use the original mints array
-			mints = filteredMints.length > 0 ? filteredMints : mints;
-			console.log('Final mints array:', mints);
-
-			// Function to get a valid quote
-			const getValidQuote = async (fromMint: string, toMint: string, amount: number) => {
-				try {
-					console.log(`Fetching quote for ${fromMint} to ${toMint} with amount ${amount}`);
-					const quote = await fetchQuote(fromMint, toMint, amount);
-					console.log('Received quote:', quote);
-					if (Number(quote?.outAmount) > amount/2) {
-						console.log('Valid quote found');
-						return quote;
-					}
-					console.log('Invalid quote (outAmount too low)');
-					return null;
-				} catch (error) {
-					console.warn(`Failed to get quote for ${fromMint} to ${toMint}:`, error);
-					return null;
-				}
-			};
-
-			// Function to select a random token pair with valid quotes
-			const selectRandomTokenPair = async () => {
-				console.log('Selecting random token pair');
-				const solAmount = 1000000000; // 1 SOL in lamports
-				const solMint = 'So11111111111111111111111111111111111111112';
-
-				while (true) {
-					const tokenA = mints[Math.floor(Math.random() * mints.length)];
-					let tokenB: any;
-					do {
-						tokenB = mints[Math.floor(Math.random() * mints.length)];
-					} while (tokenB === tokenA);
-
-					console.log('Trying token pair:', tokenA, tokenB);
-					const quoteA = await getValidQuote(solMint, tokenA, solAmount);
-					const quoteB = await getValidQuote(solMint, tokenB, solAmount);
-
-					if (quoteA && quoteB) {
-						console.log('Valid token pair found');
-						setInputToken(tokenA);
-						setOutputToken(tokenB);
-						setFormValue((prevState: any) => ({
-							...prevState,
-							inputMint: tokenA,
-							outputMint: tokenB,
-						}));
-						console.log('Updated formValue:', formValue);
-						return [tokenA, tokenB];
-					}
-					console.log('Invalid token pair, retrying');
-				}
-			};
-
-			// Select new tokens only if they're not already set
-			if (!inputToken || !outputToken) {
-				console.log('Selecting new tokens');
-				let [newTokenA, newTokenB] = await selectRandomTokenPair();
-
-				console.log('Setting new tokens:', newTokenA, newTokenB);
-				setInputToken(newTokenA);
-				setOutputToken(newTokenB);
-				setFormValue((prevState: any) => ({
-					...prevState,
-					inputMint: newTokenA.address,
-					outputMint: newTokenB.address,
-				}));
-				newTokenA = {address: newTokenA}
-				newTokenB = {address: newTokenB}
-				console.log('Selected token addresses:', newTokenA.address, newTokenB.address);
-				console.log('Updated input token:', newTokenA);
-				console.log('Updated output token:', newTokenB);
-				const randomTokenA = newTokenA;
-				const randomTokenB = newTokenB;
-				console.log('Selected token addresses:', randomTokenA.address, randomTokenB.address);
-
-				formValue.inputMint = randomTokenA.address;
-				formValue.outputMint = randomTokenB.address;
-				console.log('Updated formValue:', formValue);
-			} else {
-				console.log('Tokens already set, skipping selection');
-			}
-		} catch (error) {
-			console.error('Error fetching random tokens:', error);
-		}
-
-		} catch (error) {
-		  console.error("Failed to fetch tokens:", error);
-		}
-	  };
-	  fetchTokens()
-	}, [wallet.publicKey])
 
 	const [success,setSuccess] = useState("")
 	const fetchQuote = useCallback(async (inputMint: string, outputMint: string, amount: number) => {
@@ -6086,43 +5994,18 @@ export default function LaunchPage() {
 		});
 		return quote;
 	  } catch (error) {
-		console.error("Failed to fetch quote:", error);
-		return null;
+		const jupiterApi2 = createJupiterApiClient()
+		const quote = await jupiterApi2.quoteGet({
+			inputMint: inputMint,
+			outputMint: outputMint,
+			amount: amount,
+			slippageBps: 100, // 1% slippage
+		  });	
+		return quote;
 	  }
 	}, []);
   
   
-	const handleSwap = async () => {
-	  if (!quoteResponse || !wallet.publicKey || !wallet.signTransaction) return
-  
-	  try {
-		const swapResult = await jupiterApi.swapPost({
-		  swapRequest: {
-		  userPublicKey: wallet.publicKey.toBase58(),
-		  quoteResponse},
-		})
-		console.log("Swap transaction created:", swapResult)
-		// Deserialize the transaction
-		const swapTransactionBuf = Buffer.from(swapResult.swapTransaction, 'base64');
-		const transaction = await wallet.signTransaction(VersionedTransaction.deserialize(swapTransactionBuf));
-		
-		// Get the latest blockhash
-		const latestBlockhash = await connection.getLatestBlockhash();
-		
-		// Execute the transaction
-		const rawTransaction = transaction.serialize()
-		const txid = await connection.sendRawTransaction(rawTransaction, {
-		  skipPreflight: true,
-		  maxRetries: 2
-		});
-		
-		console.log(`Swap transaction successful: https://solscan.io/tx/${txid}`);
-		setSuccess(`Swap transaction successful: https://solscan.io/tx/${txid}`);
-	  } catch (error) {
-		setError(`Swap failed: ${error instanceof Error ? error.message : String(error)}`);
-		console.error("Swap failed:", error)
-	  }
-	}
 
 const [error, setError] = useState<string | null>(null);
 
@@ -6425,6 +6308,8 @@ class LPAMM {
   }
 }
 	const createGobblerPools = async ({
+		tokenA,
+		tokenB,
 		tokenName,
 		tokenSymbol,
 		description,
@@ -6439,6 +6324,8 @@ class LPAMM {
 		otherLink,
 		website
 	}: {
+		tokenA: string;
+		tokenB: string;
 		tokenName: string;
 		tokenSymbol: string;
 		description: string;
@@ -6459,8 +6346,7 @@ class LPAMM {
 			console.error('Wallet or public key is missing');
 			return;
 		}
-
-		if (!inputToken || !outputToken) {
+		if (!tokenA || !tokenB) {	
 			console.error('Input or output token is missing');
 			return;
 		}
@@ -6489,38 +6375,12 @@ class LPAMM {
 			}
 
 			// Get a new quote for the swap
-			const quote = await fetchQuote('So11111111111111111111111111111111111111112', targetTokenAddress, Number(initialBuy) * 10**9);
+			const quote = await fetchQuote('So11111111111111111111111111111111111111112', targetTokenAddress, Number(initialBuy) * 10**9/2);
 			if (!quote) {
 				throw new Error("Failed to fetch quote for swap");
 			}
-			const quoteResponse = quote;
 
 			try {
-				const swapResult = await jupiterApi.swapPost({
-					swapRequest: {
-						userPublicKey: wallet.publicKey.toBase58(),
-						quoteResponse
-					},
-				});
-				console.log("Swap transaction created:", swapResult);
-
-				const swapTransactionBuf = Buffer.from(swapResult.swapTransaction, 'base64');
-				const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
-				
-				if (!wallet.signTransaction) {
-					throw new Error("Wallet does not support signing transactions");
-				}
-				
-				const signedTransaction = await wallet.signTransaction(transaction);
-				
-				const rawTransaction = signedTransaction.serialize();
-				const txid = await connection.sendRawTransaction(rawTransaction, {
-					skipPreflight: true,
-					maxRetries: 2
-				});
-				
-				console.log(`Swap to ${targetTokenAddress} successful: https://solscan.io/tx/${txid}`);
-				setSuccess(`Swap to ${targetTokenAddress} successful: https://solscan.io/tx/${txid}`);
 				return new BN(quote.outAmount);
 			} catch (error) {
 				setError(`Swap failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -6528,7 +6388,6 @@ class LPAMM {
 				throw error;
 			}
 		};
-
 		try {
 			// Swap to tokenA
 			// @ts-ignore
@@ -6558,38 +6417,48 @@ let targetAmountB = BigInt(amountB?.toString() || '0');
 
 let initAmount0 = targetAmountA;
 let initAmount1 = targetAmountB;
-
 console.log('Initial amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
 
 // Calculate total SOL amount
 let totalSolAmount = BigInt(Math.floor(Math.sqrt(Number(initAmount0) * Number(initAmount1))));
 
-// Use getBuyTokensWithSol to get the token amount
-const buyResult = amm.applyBuy(totalSolAmount);
+console.log('Initial target amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
 
-if (!buyResult) {
-    console.error("Buy result is undefined");
-    throw new Error("Buy result is undefined");
+async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxIterations: number = 500) {
+    const response = await fetch('https://superswap.fomo3d.fun/init-amounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            target_amount_0: Number(targetAmount0.toString()),
+            target_amount_1: Number(targetAmount1.toString()),
+            max_iterations: maxIterations
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch init amounts");
+    }
+
+    return await response.json();
 }
 
-console.log('Buy result:', { solAmount: buyResult.solAmount.toString(), tokenAmount: buyResult.tokenAmount.toString() });
+let result;
+try {
+    result = await getInitAmounts(targetAmountA, targetAmountB);
+    console.log('Init amounts result:', result);
 
-// Calculate the cost ratio
-let costRatio = Number(buyResult.solAmount) / Number(totalSolAmount);
+    initAmount0 = BigInt(result.init_amount_0);
+    initAmount1 = BigInt(result.init_amount_1);
 
-// Recalculate init amounts based on the cost ratio
-initAmount0 = BigInt(Math.ceil(Number(targetAmountA) * costRatio));
-initAmount1 = BigInt(Math.ceil(Number(targetAmountB) * costRatio));
-
-console.log('Cost ratio:', costRatio);
-console.log('Recalculated amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
-
-console.log('Final amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
-
-console.log('Final init amount 0:', initAmount0.toString());
-console.log('Final init amount 1:', initAmount1.toString());
+    console.log('Final init amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
+    console.log('Iterations taken:', result.iterations);
+} catch (error) {
+    console.error('Error getting init amounts:', error);
+    // Handle the error appropriately, maybe set an error state or show a notification
+}
 
 // Update AMM state if necessary
+// amm.updateState(initAmount0, initAmount1);
 // pool_state.amm = amm;
 		try {
 		  console.log('Creating memecoin...')
@@ -6668,10 +6537,8 @@ console.log('Final init amount 1:', initAmount1.toString());
 		      new BN(tokenBMint.toBuffer()))
 	
 		  const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint]
-		  const aa = new BN(initAmount0.toString())
-		  const ab = new BN(initAmount1.toString())
 		  const [tokenAInfo, tokenBInfo] = isFront ? [inputToken, outputToken] : [outputToken, inputToken]
-		  const [tokenAAmount, tokenBAmount] = isFront ? [aa, ab] : [ab, aa]
+		  const [tokenAAmount, tokenBAmount] = isFront ? [new BN(initAmount0.toString()), new BN(initAmount1.toString())] : [new BN(initAmount1.toString()), new BN(initAmount0.toString())]
 	
 		  const configId = 0
 		  const [ammConfigKey, _bump] = PublicKey.findProgramAddressSync(
@@ -6811,6 +6678,88 @@ console.log('Final init amount 1:', initAmount1.toString());
 		}
 	  }
 	
+interface Token {
+  symbol: string;
+  name: string;
+  address: string;
+  logoURI: string;
+}
+
+interface TokenSelectProps {
+  label: string;
+  value: Token | null;
+  onChange: (token: Token) => void;
+  tokens: Token[];
+  placeholder: string;
+  isInput: boolean;
+}
+
+interface TokenSelectProps {
+	label: string;
+	value: Token | null;
+	onChange: (token: Token) => void;
+	tokens: Token[];
+	placeholder: string;
+	isInput: boolean;
+  }
+  
+  function TokenSelect({ label, value, onChange, tokens, placeholder, isInput }: TokenSelectProps) {
+	const [search, setSearch] = useState<string>("");
+	const [isOpen, setIsOpen] = useState<boolean>(false);
+  
+	const [filteredTokens, setFilteredTokens] = useState<Token[]>(tokens);
+  
+	useEffect(() => {
+	  setFilteredTokens(
+		tokens.filter((token: Token) => 
+		  token.symbol.toLowerCase().includes(search.toLowerCase()) ||
+		  token.name.toLowerCase().includes(search.toLowerCase()) ||
+		  token.address.toLowerCase().includes(search.toLowerCase())
+		).slice(0, 10)
+	  );
+	}, [search, tokens]);
+  
+	const handleTokenSelect = (token: Token) => {
+	  onChange(token);
+	  setSearch(token.symbol);
+	  setIsOpen(false);
+	};
+  
+	return (
+	  <div className="relative">
+		<Input
+		  label={label}
+		  placeholder={placeholder}
+		  value={search || (value ? value.symbol : '')}
+		  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+			setSearch(e.target.value);
+			setIsOpen(true);
+		  }}
+		  onFocus={() => setIsOpen(true)}
+		/>
+		{isOpen && (
+		  <div className="absolute z-10 w-full mt-1 bg-[#1c2033] rounded-lg shadow-lg max-h-60 overflow-auto">
+			{filteredTokens.map((token: Token) => (
+			  <div 
+				key={token.address} 
+				className="flex items-center gap-2 p-2 hover:bg-[#252a3f] cursor-pointer"
+				onClick={() => handleTokenSelect(token)}
+			  >
+				<img src={token.logoURI} alt={token.symbol} className="w-6 h-6 rounded-full" />
+				<div className="flex flex-col">
+				  <span>{token.symbol}</span>
+				  <span className="text-small text-default-400">{token.name}</span>
+				</div>
+			  </div>
+			))}
+		  </div>
+		)}
+	  </div>
+	);
+  }
+const getany = (token: string): Token => {
+	return tokens.find(t => t.address === token) || { symbol: "", name: "", address: "", logoURI: "" };
+}
 	return (
 		<form
 			onSubmit={(e) => {
@@ -6853,6 +6802,7 @@ console.log('Final init amount 1:', initAmount1.toString());
 							</>
 						)}
 					/>
+
 				</div>
 
 
@@ -7043,7 +6993,42 @@ console.log('Final init amount 1:', initAmount1.toString());
 							</Checkbox>
 						)}
 					/>
-
+					{state.values.dex === "GOBBLER" && (
+					  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+						<Field
+						  name="tokenA"
+						  children={({ state, handleChange }) => (
+							<TokenSelect
+							  label="Token A"
+							  value={inputToken}
+							  onChange={(token: Token) => {
+								setInputToken(token);
+								handleChange(token.address);
+							  }}
+							  tokens={tokens}
+							  placeholder="Select Token A"
+							  isInput={true}
+							/>
+						  )}
+						/>
+						<Field
+						  name="tokenB"
+						  children={({ state, handleChange }) => (
+							<TokenSelect
+							  label="Token B"
+							  value={outputToken}
+							  onChange={(token: Token) => {
+								setOutputToken(token);
+								handleChange(token.address);
+							  }}
+							  tokens={tokens}
+							  placeholder="Select Token B"
+							  isInput={false}
+							/>
+						  )}
+						/>
+					  </div>
+					)}
 					<Button type="submit" fullWidth color="primary" className="text-xl" startContent={<Icon icon="fa6-solid:rocket" className="w-4" />}>
 						Launch
 					</Button>
