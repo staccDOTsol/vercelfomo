@@ -7,7 +7,7 @@ import SidebarContainer from "@/components/sidebar-container";
 
 import { Providers } from "./providers";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useContext } from "react";
 import { motion } from "framer-motion";
 
 import { Icon } from "@iconify/react";
@@ -19,6 +19,7 @@ import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl } from "@solana/web3.js";
+import Modals from "@/components/modals";
 
 function useIsMobile() {
 	const [isMobile, setIsMobile] = useState(false);
@@ -86,6 +87,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 									<div className={`flex flex-col flex-1 md:pl-72 ${isSidebarOpen ? "h-0 overflow-hidden" : ""}`}>
 										<TopMenu toggleSidebar={toggleSidebar} />
+
+                    <Modals />
 
 										{children}
 									</div>
