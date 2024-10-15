@@ -217,26 +217,46 @@ export default function Component() {
     const balanceNumber = parseInt(balance)
     return (balanceNumber / (10 ** decimals)).toFixed(6)
   }
-
   const handleSearchTokens = useCallback(
     async (searchValue: string, isInput: boolean = true) => {
       const searchFunc = isInput ? setSearchInput : setSearchOutput
       const openFunc = isInput ? setIsInputSelectOpen : setIsOutputSelectOpen
       searchFunc(searchValue)
       
-      if (isInput) {
-        let filteredTokens = tokens;
-        if (searchValue.length >= 1) {
-          filteredTokens = tokens.filter(token => 
-            token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
-            token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-            token.address.toLowerCase().includes(searchValue.toLowerCase())
-          );
+      if (searchValue.length >= 1) {
+        try {
+          let filteredTokens: TokenInfo[];
+          if (isInput) {
+            filteredTokens = tokens.filter(token => 
+              token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
+              token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+              token.address.toLowerCase().includes(searchValue.toLowerCase())
+            ).slice(0, 10);
+            setFilteredInputTokens(filteredTokens);
+          } else {
+            const response = await fetch(`/api/token?search=${encodeURIComponent(searchValue)}`);
+            if (!response.ok) {
+              throw new Error('Failed to fetch tokens');
+            }
+            filteredTokens = await response.json();
+            filteredTokens = filteredTokens.slice(0, 10).map((token: any) => ({
+              ...token,
+              logoURI: token.logoURI
+            }));
+            setFilteredOutputTokens(filteredTokens);
+          }
+          openFunc(true);
+        } catch (error) {
+          console.error('Error fetching tokens:', error);
+          setError('Failed to fetch tokens. Please try again.');
         }
-        setFilteredInputTokens(filteredTokens.slice(0, 10));
-        openFunc(true);
       } else {
-        // ... existing output token search logic ...
+        if (isInput) {
+          fetchTokens();
+        } else {
+          setFilteredOutputTokens([]);
+        }
+        openFunc(false);
       }
     },
     [tokens, fetchTokens]
@@ -246,6 +266,8 @@ export default function Component() {
     setFilteredInputTokens(tokens.slice(0, 10));
     setIsInputSelectOpen(true);
   };
+  const [filteredOutputTokens, setFilteredOutputTokens] = useState<TokenInfo[]>([])
+  
 
   const handleCustomTokenInput = async (searchValue: string, isInput: boolean) => {
     if (searchValue.length === 44 || searchValue.length === 32) {
