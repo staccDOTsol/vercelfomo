@@ -6828,7 +6828,7 @@ console.log('Final init amount 1:', initAmount1.toString());
 
 			<div className="w-full md:w-[800px] mx-auto pb-44 px-4 md:px-0">
 				<h2 className="text-2xl font-bold text-center p-6">Choose a DEX</h2>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
 					<Field
 						name="dex"
 						children={({ state, handleChange, handleBlur }) => (

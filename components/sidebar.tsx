@@ -1,14 +1,16 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { usePathname } from "next/navigation";
+import { ModalContext } from "@/app/providers";
 
 interface SidebarItem {
   key: string;
   href: string;
   icon: string;
   title: string;
+  action?: string;
 }
 
 export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSidebarOpen: boolean; items: SidebarItem[]; toggleSidebar: () => void }) {
@@ -25,7 +27,11 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
       case /^\/multi-chart(\/.*)?$/.test(pathName): 
         return "multicharts" 
       case /^\/new-pairs(\/.*)?$/.test(pathName): 
-        return "new-pairs" 
+        return "new-pairs"
+      case /^\/portfolio(\/.*)?$/.test(pathName):
+        return "portfolio"
+      case /^\/gainers-and-losers(\/.*)?$/.test(pathName):
+        return "gainers-and-losers"
 			default:
 				return "";
 		}
@@ -46,6 +52,7 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
 		};
 	}, [pathName]);
 
+  const modalContext = useContext(ModalContext);
 
 	return (
 		<div className="flex flex-col gap-2 px-2 z-50">
@@ -55,6 +62,10 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
 					href={item.href}
 					className={`flex items-center gap-2 text-lg rounded-xl py-1 px-2 cursor-pointer hover:bg-primary/50 hover:text-white/100 transition-all duration-300 ease-in-out ${getActivePage() === item.key ? "bg-primary/50 text-white/100" : "text-white/50"}`}
           onClick={() => {
+            if (item.action) {
+              modalContext?.setOpenModals((prev: any) => [...prev, item.action]);
+            }
+
             if (isSidebarOpen && isMobile) {
               toggleSidebar();
             }

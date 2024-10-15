@@ -3,6 +3,7 @@ interface SidebarItem {
   href: string;
   icon: string;
   title: string;
+  action?: string;
 }
 
 export const sidebarItems: SidebarItem[] = [
@@ -17,6 +18,7 @@ export const sidebarItems: SidebarItem[] = [
 		href: "#",
 		icon: "solar:bell-bold",
 		title: "Alerts",
+    action: "alertModal"
 	},
 	{
 		key: "multicharts",
@@ -31,14 +33,14 @@ export const sidebarItems: SidebarItem[] = [
 		title: "New Pairs",
 	},
 	{
-		key: "gainers-losers",
-		href: "#",
+		key: "gainers-and-losers",
+		href: "/gainers-and-losers",
 		icon: "solar:chart-square-bold",
 		title: "Gainers and Losers",
 	},
 	{
 		key: "portfolio",
-		href: "#",
+		href: "/portfolio",
 		icon: "solar:wallet-2-bold",
 		title: "Portfolio",
 	},

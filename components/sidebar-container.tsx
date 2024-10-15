@@ -1,6 +1,6 @@
 "use client";
 
-import { Image, Link } from "@nextui-org/react";
+import { Divider, Image, Link } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 import Sidebar from "@/components/sidebar";
 import Logo from "@/app/assets/images/logo_color.svg";
@@ -82,6 +82,15 @@ export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { tog
 				<Spacer y={8} />
 
 				{connected ? <WalletDisconnectButton /> : <WalletModalButton />}
+
+        <div className="pt-4">
+          <Divider className="mb-4" />
+
+          <Button fullWidth onPress={() => window.open("https://linktr.ee/Fomo3d", "_blank")}>
+            <Icon icon="simple-icons:linktree" />
+            <span className="text-xl">Linktree</span>
+          </Button>
+        </div>
 			</div>
 		</>
 	);
