@@ -295,6 +295,14 @@ export default function Component() {
     }
   }
 
+  const handlePercentageClick = (percentage: number) => {
+    if (inputToken && inputToken.balance) {
+      const maxAmount = Number(inputToken.balance) / (10 ** (inputToken.decimals || 0));
+      const newAmount = (maxAmount * percentage / 100).toFixed(6);
+      setFormValue(prev => ({ ...prev, amount: newAmount }));
+    }
+  };
+
   return (
     <div className="w-full h-full flex items-center justify-center">
       <Card className="w-full max-w-[450px] pb-3 bg-[#1c2033] shadow-none">
@@ -374,6 +382,19 @@ export default function Component() {
                       ],
                     }}
                   />
+                  <div className="flex justify-between mt-2">
+                    {[10, 25, 50, 100].map((percentage) => (
+                      <Button
+                        key={percentage}
+                        size="sm"
+                        variant="flat"
+                        color="primary"
+                        onClick={() => handlePercentageClick(percentage)}
+                      >
+                        {percentage}%
+                      </Button>
+                    ))}
+                  </div>
                 </div>
                 <div className="mt-2 text-sm text-gray-400">
                   Balance: {formatBalance(inputToken?.balance?.toString(), inputToken?.decimals || 0)} {inputToken?.symbol}
