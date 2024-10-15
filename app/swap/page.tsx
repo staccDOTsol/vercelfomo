@@ -267,7 +267,7 @@ export default function Component() {
     setIsInputSelectOpen(true);
   };
   const [filteredOutputTokens, setFilteredOutputTokens] = useState<TokenInfo[]>([])
-  
+
 
   const handleCustomTokenInput = async (searchValue: string, isInput: boolean) => {
     if (searchValue.length === 44 || searchValue.length === 32) {
@@ -306,14 +306,14 @@ export default function Component() {
   };
 
   return (
-    <div className="w-full h-full flex items-center justify-center">
-      <Card className="w-full max-w-[450px] pb-3 bg-[#1c2033] shadow-none">
+    <div className="w-full h-full flex items-center justify-center bg-[#0f1221]">
+      <Card className="w-full max-w-[450px] pb-3 bg-[#1c2033] shadow-none border-none">
         <CardHeader className="flex justify-center">
-          <h1 className="text-3xl font-bold text-center pt-2">SuperSwap</h1>
+          <h1 className="text-3xl font-bold text-center pt-2 text-white">SuperSwap</h1>
         </CardHeader>
         <CardBody className="pb-0">
           <div className="flex flex-col gap-1.5 items-center px-2">
-            <Card className="bg-[#252a3f] border-0 shadow-none py-3 w-full">
+            <Card className="bg-[#252a3f] border-none shadow-none py-3 w-full">
               <CardBody>
                 <div className="flex flex-col gap-2">
                   <div className="relative">
@@ -331,11 +331,13 @@ export default function Component() {
                         input: [
                           "bg-[#1c2033]",
                           "text-sm",
+                          "text-white",
                           "placeholder:text-gray-400",
                         ],
                         inputWrapper: [
                           "bg-[#1c2033]",
                           "rounded-lg",
+                          "border-none",
                         ],
                       }}
                     />
@@ -378,10 +380,12 @@ export default function Component() {
                         "bg-[#1c2033]",
                         "text-2xl", 
                         "font-bold",
+                        "text-white",
                       ],
                       inputWrapper: [
                         "bg-[#1c2033]",
                         "rounded-lg",
+                        "border-none",
                       ],
                     }}
                   />
@@ -391,7 +395,7 @@ export default function Component() {
                         key={percentage}
                         size="sm"
                         variant="flat"
-                        color="primary"
+                        className="bg-[#3b4155] text-white hover:bg-[#4e5674]"
                         onClick={() => handlePercentageClick(percentage)}
                       >
                         {percentage}%
@@ -405,11 +409,11 @@ export default function Component() {
               </CardBody>
             </Card>
 
-            <Button onClick={switchTokens} isIconOnly className="w-10 h-10 -mt-6 -mb-6 z-10 bg-[#252a3f] border-[3px] border-[#1c2033]" aria-label="Swap">
+            <Button onClick={switchTokens} isIconOnly className="w-10 h-10 -mt-6 -mb-6 z-10 bg-[#252a3f] border-[3px] border-[#1c2033] text-white" aria-label="Swap">
               <Icon icon="mdi:swap-vertical" />
             </Button>
 
-            <Card className="bg-[#252a3f] border-0 shadow-none py-3 w-full">
+            <Card className="bg-[#252a3f] border-none shadow-none py-3 w-full">
               <CardBody>
                 <div className="flex flex-col gap-2">
                   <div className="relative">
@@ -487,14 +491,14 @@ export default function Component() {
                     Rate: 1 {inputToken?.symbol} = {(Number(quoteResponse.outAmount) / Number(formValue.amount)).toFixed(6)} {outputToken?.symbol}
                   </div>
                 )}
-              </CardBody>
+               </CardBody>
             </Card>
           </div>
         </CardBody>
         <CardFooter className="px-6 pt-4">
           <Button 
             onClick={handleSwap} 
-            color="primary" 
+            className="bg-[#7e3af2] text-white hover:bg-[#6929c4]"
             fullWidth 
             size="lg" 
             aria-label="Swap"
