@@ -12,7 +12,7 @@ import { Button, Input, ScrollShadow, Spacer, User } from "@nextui-org/react";
 import { WalletDisconnectButton, WalletModalButton } from "@solana/wallet-adapter-react-ui";
 
 export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { toggleSidebar: () => void; isSidebarOpen: boolean }) {
-  const { connected } = useWallet();
+  const { connected, wallet } = useWallet();
 
 	return (
 		<>

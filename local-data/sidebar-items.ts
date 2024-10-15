@@ -33,7 +33,7 @@ export const sidebarItems: SidebarItem[] = [
 		title: "New Pairs",
 	},
 	{
-		key: "gainers-losers",
+		key: "gainers-and-losers",
 		href: "/gainers-and-losers",
 		icon: "solar:chart-square-bold",
 		title: "Gainers and Losers",

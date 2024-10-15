@@ -27,7 +27,11 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
       case /^\/multi-chart(\/.*)?$/.test(pathName): 
         return "multicharts" 
       case /^\/new-pairs(\/.*)?$/.test(pathName): 
-        return "new-pairs" 
+        return "new-pairs"
+      case /^\/portfolio(\/.*)?$/.test(pathName):
+        return "portfolio"
+      case /^\/gainers-and-losers(\/.*)?$/.test(pathName):
+        return "gainers-and-losers"
 			default:
 				return "";
 		}
