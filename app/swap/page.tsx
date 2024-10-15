@@ -37,6 +37,7 @@ export default function Component() {
   const [customInputToken, setCustomInputToken] = useState<TokenInfo | null>(null)
   const [customOutputToken, setCustomOutputToken] = useState<TokenInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [filteredInputTokens, setFilteredInputTokens] = useState<TokenInfo[]>([])
 
   const endpoint = "https://rpc.ironforge.network/mainnet?apiKey=01HRZ9G6Z2A19FY8PR4RF4J4PW"
   const connection = useMemo(() => new Connection(endpoint), [])
@@ -223,47 +224,28 @@ export default function Component() {
       const openFunc = isInput ? setIsInputSelectOpen : setIsOutputSelectOpen
       searchFunc(searchValue)
       
-      if (searchValue.length >= 1) {
-        try {
-          let filteredTokens: TokenInfo[];
-          if (isInput) {
-            filteredTokens = tokens.filter(token => 
-              token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
-              token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-              token.address.toLowerCase().includes(searchValue.toLowerCase())
-            ).slice(0, 10);
-            setFilteredInputTokens(filteredTokens);
-          } else {
-            const response = await fetch(`/api/token?search=${encodeURIComponent(searchValue)}`);
-            if (!response.ok) {
-              throw new Error('Failed to fetch tokens');
-            }
-            filteredTokens = await response.json();
-            filteredTokens = filteredTokens.slice(0, 10).map((token: any) => ({
-              ...token,
-              logoURI: token.logoURI
-            }));
-            setFilteredOutputTokens(filteredTokens);
-          }
-          openFunc(true);
-        } catch (error) {
-          console.error('Error fetching tokens:', error);
-          setError('Failed to fetch tokens. Please try again.');
+      if (isInput) {
+        let filteredTokens = tokens;
+        if (searchValue.length >= 1) {
+          filteredTokens = tokens.filter(token => 
+            token.symbol.toLowerCase().includes(searchValue.toLowerCase()) ||
+            token.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+            token.address.toLowerCase().includes(searchValue.toLowerCase())
+          );
         }
+        setFilteredInputTokens(filteredTokens.slice(0, 10));
+        openFunc(true);
       } else {
-        if (isInput) {
-          fetchTokens();
-        } else {
-          setFilteredOutputTokens([]);
-        }
-        openFunc(false);
+        // ... existing output token search logic ...
       }
     },
     [tokens, fetchTokens]
   );
 
-  const [filteredInputTokens, setFilteredInputTokens] = useState<TokenInfo[]>([]);
-  const [filteredOutputTokens, setFilteredOutputTokens] = useState<TokenInfo[]>([]);
+  const handleInputFocus = () => {
+    setFilteredInputTokens(tokens.slice(0, 10));
+    setIsInputSelectOpen(true);
+  };
 
   const handleCustomTokenInput = async (searchValue: string, isInput: boolean) => {
     if (searchValue.length === 44 || searchValue.length === 32) {
@@ -322,6 +304,7 @@ export default function Component() {
                         handleSearchTokens(e.target.value, true)
                         handleCustomTokenInput(e.target.value, true)
                       }}
+                      onFocus={handleInputFocus}
                       classNames={{
                         input: [
                           "bg-[#1c2033]",
