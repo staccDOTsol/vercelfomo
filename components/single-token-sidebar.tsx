@@ -128,7 +128,7 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi.quoteGet({
 			inputMint: inputMint,
 			outputMint: outputMint,
-			maxAccounts: 15,
+			maxAccounts: 12,
 			computeAutoSlippage: true,
 			amount: Math.floor(amount/2),
 			slippageBps: 1000, // 1% slippage
@@ -139,7 +139,7 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi2.quoteGet({
 			  inputMint: inputMint,
 			  outputMint: outputMint,
-			  maxAccounts: 15,
+			  maxAccounts: 12,
 			  amount: Math.floor(amount/2),
 			  slippageBps: 1000, // 1% slippage
 			  computeAutoSlippage: true,
@@ -402,7 +402,7 @@ try {
 					mintA,
 					mintB,
 					poolKeys.lpMint,
-                    (new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1)))),
+                    (new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1)))).div(new BN(2)),
 					new BN(Number.MAX_SAFE_INTEGER),
 					new BN(Number.MAX_SAFE_INTEGER),
 					// @ts-ignore
@@ -436,7 +436,6 @@ try {
 						payerKey: wallet.publicKey as PublicKey,
 						recentBlockhash: blockhash,
 						instructions: [
-							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
 							...setupInstructions.map(deserializeInstruction),
 							deserializeInstruction(swapInstructionPayload),
 							...(cleanupInstruction ? [deserializeInstruction(cleanupInstruction)] : []),
@@ -453,7 +452,8 @@ try {
 				const ft = await processSwapResult(swapResultA, swapResultB, someIxs);
 				if (!wallet.signAllTransactions) return 
 				// Update tokenAAmount and tokenBAmount with the expected output amounts
-				
+				const sim = await connection.simulateTransaction(ft)
+				console.log(sim)
 
                 const signed = await provider.sendAndConfirm(ft)
 				console.log(signed)
@@ -791,7 +791,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                         payerKey: wallet.publicKey as PublicKey,
                         recentBlockhash: blockhash,
                         instructions: [
-                            ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
+                            
                             ...someIxs,
                             ...setupInstructionsBase.map(deserializeInstruction),
                             deserializeInstruction(swapInstructionPayloadBase),
@@ -807,7 +807,8 @@ console.log('Quotes:', quoteBase, quoteQuote);
 
                 const transaction = await processSwapResult(swapResultBase, swapResultQuote, someIxs);
                 if (!wallet.signAllTransactions) return;
-
+				const sim = await connection.simulateTransaction(transaction)
+				console.log(sim)
                 const signed = await provider.sendAndConfirm(transaction)
 				console.log(signed)
 
