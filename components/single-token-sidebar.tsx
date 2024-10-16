@@ -379,7 +379,7 @@ try {
 					mintA,
 					mintB,
 					poolKeys.lpMint,
-                    (new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1)))).div(new BN(2)),
+                    (new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1)))).div(new BN(4)),
 					new BN(Number.MAX_SAFE_INTEGER),
 					new BN(Number.MAX_SAFE_INTEGER),
 					// @ts-ignore
