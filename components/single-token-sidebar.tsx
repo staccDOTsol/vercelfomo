@@ -687,7 +687,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     mintA,
                     mintB,
                     poolKeys.lpMint,
-                    new BN(Math.sqrt(Number(quoteBase.outAmount) * Number(quoteQuote.outAmount))),
+                    new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1))),
 					new BN(0),
                     new BN(0),
                     // @ts-ignore
