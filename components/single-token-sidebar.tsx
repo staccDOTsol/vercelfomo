@@ -150,7 +150,7 @@ export default function SingleTokenSidebar({
 
     const RPC_URL = 'https://rpc.ironforge.network/mainnet?apiKey=01HRZ9G6Z2A19FY8PR4RF4J4PW';
     const wallet = useWallet();
-    const connection = new Connection(RPC_URL, "recent");
+    const connection = new Connection(RPC_URL, "confirmed");
     const aw = useAnchorWallet();
 
     // RPC URL and necessary program IDs
@@ -403,8 +403,8 @@ try {
 			for (const signedTx of signed) {
 				const txId = await connection.sendRawTransaction(signedTx.serialize());
 				console.log(`Transaction sent: ${txId}`);
-				await connection.confirmTransaction(txId, 'recent');
-				console.log(`Transaction ${txId} recent`);
+				await connection.confirmTransaction(txId, 'confirmed');
+				console.log(`Transaction ${txId} confirmed`);
 			}
 			}
 			else {
@@ -713,8 +713,8 @@ console.log('Quotes:', quoteBase, quoteQuote);
                 for (const signedTx of signed) {
                     const txId = await connection.sendRawTransaction(signedTx.serialize());
                     console.log(`Transaction sent: ${txId}`);
-                    await connection.confirmTransaction(txId, 'recent');
-                    console.log(`Transaction ${txId} recent`);
+                    await connection.confirmTransaction(txId, 'confirmed');
+                    console.log(`Transaction ${txId} confirmed`);
                 }
 
             } else {
