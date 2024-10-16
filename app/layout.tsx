@@ -66,11 +66,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 			<head>
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-				<link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet" />
-				<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />
+				<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
 				<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 			</head>
-			<body className={clsx("min-h-screen bg-background antialiased jersey-10-regular")}>
+			<body className={clsx("min-h-screen bg-background antialiased open-sans")}>
 				<Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
 					<ConnectionProvider endpoint={endpoint}>
 						<WalletProvider wallets={wallets} autoConnect>

@@ -55,9 +55,9 @@ export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { tog
         <div className="pt-4">
           <Divider className="mb-4" />
 
-          <Button fullWidth onPress={() => window.open("https://linktr.ee/Fomo3d", "_blank")}>
+          <Button fullWidth onPress={() => window.open("https://linktr.ee/Fomo3d", "_blank")} className="">
             <Icon icon="simple-icons:linktree" />
-            <span className="text-xl">Linktree</span>
+            <span className="text-sm">Linktree</span>
           </Button>
         </div>
 			</div>

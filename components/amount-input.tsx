@@ -27,22 +27,22 @@ export default function AmountInput({ amount, setAmount }: { amount: string; set
 				/>
 
 				<div className="bg-white/10 grid grid-cols-6 gap-0 divide-x divide-black/30">
-					<span className="bg-transparent text-md hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("0.01")} aria-label="0.01">
+					<span className="bg-transparent text-sm hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("0.01")} aria-label="0.01">
 						0.01
 					</span>
-					<span className="bg-transparent text-md hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("0.25")} aria-label="0.25">
+					<span className="bg-transparent text-sm hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("0.25")} aria-label="0.25">
 						0.25
 					</span>
-					<span className="bg-transparent text-md hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("0.5")} aria-label="0.5">
+					<span className="bg-transparent text-sm hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("0.5")} aria-label="0.5">
 						0.5
 					</span>
-					<span className="bg-transparent text-md hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("1")} aria-label="1">
+					<span className="bg-transparent text-sm hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("1")} aria-label="1">
 						1
 					</span>
-					<span className="bg-transparent text-md hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("2")} aria-label="2">
+					<span className="bg-transparent text-sm hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("2")} aria-label="2">
 						2
 					</span>
-					<span className="bg-transparent text-md hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("5")} aria-label="5">
+					<span className="bg-transparent text-sm hover:bg-white/10 w-full h-full flex items-center justify-center py-1" onClick={() => handleButtonClick("5")} aria-label="5">
 						5
 					</span>
 				</div>

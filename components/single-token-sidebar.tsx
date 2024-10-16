@@ -682,7 +682,7 @@ const ai = await connection.getAccountInfo(tokenMint)
 				{token.isBondingCurve && 
 				<Card className="bg-transparent border border-white/10">
 					<CardBody>
-						<div className="leading-none -mt-1 pb-1 text-lg">
+						<div className="leading-none -mt-1 pb-1 text-md">
 							Progress <span className="text-primary">{progress}%</span>
 						</div>
 						<Progress value={progress} size="md" />

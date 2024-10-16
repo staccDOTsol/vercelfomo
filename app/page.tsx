@@ -95,7 +95,7 @@ export default function Home() {
                         <h2 className="text-xl font-bold leading-none">
                           <span className="opacity-50">@{coin.mint.metadata.symbol}</span> {coin.mint.metadata.name}
                         </h2>
-                        <p className="opacity-70">{coin.mint.metadata.description}</p>
+                        <p className="opacity-70 text-sm pt-1">{coin.mint.metadata.description}</p>
                       </div>
                     </div>
 
@@ -103,12 +103,12 @@ export default function Home() {
 
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between gap-2 w-full">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-sm">
                           <span className="text-secondary">{coin['1h'] || 'N/A'}</span>
                           <span>${coin.volume || 'N/A'}</span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-sm">
                           <span>{coin.buys || 'N/A'} buys</span>/<span>{coin.sells || 'N/A'} sells</span>
                         </div>
                       </div>
