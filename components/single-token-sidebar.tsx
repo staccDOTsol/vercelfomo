@@ -439,10 +439,10 @@ try {
 							...computeBudgetInstructions.map(deserializeInstruction),
 							...setupInstructions.map(deserializeInstruction),
 							deserializeInstruction(swapInstructionPayload),
-							...(cleanupInstruction ? [deserializeInstruction(cleanupInstruction)] : []),
+						//	...(cleanupInstruction ? [deserializeInstruction(cleanupInstruction)] : []),
 							...setupInstructionsB.map(deserializeInstruction),
 							deserializeInstruction(swapInstructionPayloadB),
-							...(cleanupInstructionB ? [deserializeInstruction(cleanupInstructionB)] : []),
+					//		...(cleanupInstructionB ? [deserializeInstruction(cleanupInstructionB)] : []),
 							...someIxs
 						],
 					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
@@ -797,10 +797,10 @@ console.log('Quotes:', quoteBase, quoteQuote);
                             ...someIxs,
                             ...setupInstructionsBase.map(deserializeInstruction),
                             deserializeInstruction(swapInstructionPayloadBase),
-							...(cleanupInstructionBase ? [deserializeInstruction(cleanupInstructionBase)] : []),
+							//...(cleanupInstructionBase ? [deserializeInstruction(cleanupInstructionBase)] : []),
                             ...setupInstructionsQuote.map(deserializeInstruction),
                             deserializeInstruction(swapInstructionPayloadQuote),
-							...(cleanupInstructionQuote ? [deserializeInstruction(cleanupInstructionQuote)] : []),
+						//	...(cleanupInstructionQuote ? [deserializeInstruction(cleanupInstructionQuote)] : []),
                         ],
                     }).compileToV0Message([...addressLookupTableAccountsBase, ...addressLookupTableAccountsQuote])
 
