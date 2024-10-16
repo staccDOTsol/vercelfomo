@@ -379,7 +379,7 @@ try {
 					mintA,
 					mintB,
 					poolKeys.lpMint,
-                    (new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1)))).div(new BN(4)),
+                    (new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1)))).div(new BN(2)),
 					new BN(Number.MAX_SAFE_INTEGER),
 					new BN(Number.MAX_SAFE_INTEGER),
 					// @ts-ignore
@@ -400,11 +400,15 @@ try {
 				const transaction = new VersionedTransaction(messageV0);
 
 				const signed = await wallet.signAllTransactions([transactionA, transactionB, transaction])
+				let i = 0;
 			for (const signedTx of signed) {
 				const txId = await connection.sendRawTransaction(signedTx.serialize());
 				console.log(`Transaction sent: ${txId}`);
-				await connection.confirmTransaction(txId, 'confirmed');
+				if (i == 1){
+				await connection.confirmTransaction(txId, 'finalized');
 				console.log(`Transaction ${txId} confirmed`);
+				}
+				i++;
 			}
 			}
 			else {
