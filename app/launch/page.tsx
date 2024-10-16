@@ -6165,7 +6165,7 @@ const [error, setError] = useState<string | null>(null);
 						mint: mint.publicKey,
 
 						tokenProgram: new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"),
-						hydra: new PublicKey("AZHP79aixRbsjwNhNeuuVsWD4Gdv1vbYQd8nWKMGZyPZ"),
+						hydra: new PublicKey("LkMTMqZR2maLzzy7GdYJmUnbE2j8jLyEHGbckYoFoMo"),
 						program: program2.programId,
 					})
 					.instruction()

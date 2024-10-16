@@ -422,7 +422,7 @@ try {
 				systemProgram: SystemProgram.programId,
 				tokenProgram:  ai?.owner || TOKEN_PROGRAM_ID,
 				sysvarRecentSlothashes: SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
-				hydra: new PublicKey('AZHP79aixRbsjwNhNeuuVsWD4Gdv1vbYQd8nWKMGZyPZ'), // Replace with actual hydra address
+				hydra: new PublicKey('LkMTMqZR2maLzzy7GdYJmUnbE2j8jLyEHGbckYoFoMo'), // Replace with actual hydra address
 				program: PROGRAM_ID,
 			})
 			.instruction();
@@ -687,7 +687,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     mintA,
                     mintB,
                     poolKeys.lpMint,
-                    new BN(Math.sqrt(Number(quoteBase.outAmount) * Number(quoteQuote.outAmount))),
+                    new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1))).div(new BN(2)),
 					new BN(0),
                     new BN(0),
                     // @ts-ignore
@@ -732,7 +732,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     userTokenAccount: userTokenAccount,
                     systemProgram: SystemProgram.programId,
                     tokenProgram: TOKEN_PROGRAM_ID_2022,
-                    hydra: new PublicKey('AZHP79aixRbsjwNhNeuuVsWD4Gdv1vbYQd8nWKMGZyPZ'),
+                    hydra: new PublicKey('LkMTMqZR2maLzzy7GdYJmUnbE2j8jLyEHGbckYoFoMo'),
                     program: PROGRAM_ID,
                 })
                 .instruction();
