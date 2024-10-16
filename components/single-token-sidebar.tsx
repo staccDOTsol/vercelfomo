@@ -436,6 +436,7 @@ try {
 						payerKey: wallet.publicKey as PublicKey,
 						recentBlockhash: blockhash,
 						instructions: [
+							...computeBudgetInstructions.map(deserializeInstruction),
 							...setupInstructions.map(deserializeInstruction),
 							deserializeInstruction(swapInstructionPayload),
 							...(cleanupInstruction ? [deserializeInstruction(cleanupInstruction)] : []),
@@ -792,7 +793,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                         payerKey: wallet.publicKey as PublicKey,
                         recentBlockhash: blockhash,
                         instructions: [
-                            
+							...computeBudgetInstructionsBase.map(deserializeInstruction),
                             ...someIxs,
                             ...setupInstructionsBase.map(deserializeInstruction),
                             deserializeInstruction(swapInstructionPayloadBase),
