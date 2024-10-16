@@ -9,14 +9,14 @@ import SlippageInput from "@/components/slippage-input";
 import AmountInput from "@/components/amount-input";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createAssociatedTokenAccountInstruction, TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { AddressLookupTableAccount, ComputeBudgetProgram, Connection, PublicKey, SystemProgram, SYSVAR_RECENT_BLOCKHASHES_PUBKEY, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction} from '@solana/web3.js'
+import { AddressLookupTableAccount, ComputeBudgetProgram, Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_RECENT_BLOCKHASHES_PUBKEY, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction} from '@solana/web3.js'
 import { BN } from "bn.js";
 import { CREATE_CPMM_POOL_PROGRAM, getCreatePoolKeys, getPdaPoolAuthority, getPdaPoolId, makeDepositCpmmInInstruction, makeInitializeMetadata, makeWithdrawCpmmInInstruction, METADATA_PROGRAM_ID, TokenInfo } from "tokengobbler";
 
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { useAnchorWallet, useWallet } from "@solana/wallet-adapter-react";
-import { createJupiterApiClient } from "@jup-ag/api";
+import { createJupiterApiClient, QuoteResponse } from "@jup-ag/api";
 import { createAssociatedLedgerAccountInstruction } from "@raydium-io/raydium-sdk-v2";
 
 class LPAMM {
@@ -128,7 +128,7 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi.quoteGet({
 			inputMint: inputMint,
 			outputMint: outputMint,
-			amount: amount/2,
+			amount: Math.floor(amount/2),
 			slippageBps: 1000, // 1% slippage
 		  });
 		  return quote;
@@ -137,7 +137,7 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi2.quoteGet({
 			  inputMint: inputMint,
 			  outputMint: outputMint,
-			  amount: amount/2,
+			  amount: Math.floor(amount/2),
 			  slippageBps: 1000, // 1% slippage
 			});	
 		  return quote;
@@ -150,7 +150,7 @@ export default function SingleTokenSidebar({
 
     const RPC_URL = 'https://rpc.ironforge.network/mainnet?apiKey=01HRZ9G6Z2A19FY8PR4RF4J4PW';
     const wallet = useWallet();
-    const connection = new Connection(RPC_URL);
+    const connection = new Connection(RPC_URL, "recent");
     const aw = useAnchorWallet();
 
     // RPC URL and necessary program IDs
@@ -306,6 +306,7 @@ try {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteA,
 						wrapAndUnwrapSol: true
+						,computeUnitPriceMicroLamports: 33333
 					},
 				});
 				} catch (error) {
@@ -315,6 +316,7 @@ try {
 							userPublicKey: wallet.publicKey.toBase58(),
 							quoteResponse: quoteA,
 							wrapAndUnwrapSol: true
+							,computeUnitPriceMicroLamports: 33333
 						},
 					});
 				}
@@ -324,6 +326,7 @@ try {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
 						wrapAndUnwrapSol: true
+						,computeUnitPriceMicroLamports: 33333
 					},
 				});
 			} catch (error) {
@@ -333,6 +336,7 @@ try {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
 						wrapAndUnwrapSol: true
+						,computeUnitPriceMicroLamports: 33333
 					},
 				});
 				console.error('Error during swap:', error);
@@ -375,7 +379,7 @@ try {
 					mintA,
 					mintB,
 					poolKeys.lpMint,
-                    new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1))),
+                    (new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1)))).div(new BN(2)),
 					new BN(Number.MAX_SAFE_INTEGER),
 					new BN(Number.MAX_SAFE_INTEGER),
 					// @ts-ignore
@@ -389,6 +393,7 @@ try {
 					payerKey: wallet.publicKey,
 					recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
 					instructions: [
+						ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333}),
 						...someIxs
 							],
 				}).compileToV0Message([]);
@@ -398,8 +403,8 @@ try {
 			for (const signedTx of signed) {
 				const txId = await connection.sendRawTransaction(signedTx.serialize());
 				console.log(`Transaction sent: ${txId}`);
-				await connection.confirmTransaction(txId, 'confirmed');
-				console.log(`Transaction ${txId} confirmed`);
+				await connection.confirmTransaction(txId, 'recent');
+				console.log(`Transaction ${txId} recent`);
 			}
 			}
 			else {
@@ -559,69 +564,46 @@ const ai = await connection.getAccountInfo(tokenMint)
                 let initAmount0 = BigInt(0);
                 let initAmount1 = BigInt(0);
                 let result;
+                const halfSellAmount = BigInt(sellAmountLamports.toString()) / BigInt(2);
+                
+                // Fetch quote for swapping SOL to base token
+                console.log(`Fetching quote for base token: ${token.baseTokenMint}, amount: ${Number(halfSellAmount)}`);
+                let quoteBase = await fetchQuote('So11111111111111111111111111111111111111112', token.baseTokenMint, Number(sellAmountLamports)) as QuoteResponse;
+                
+                // Fetch quote for swapping SOL to quote token
+                console.log(`Fetching quote for quote token: ${token.quoteTokenMint}, amount: ${Number(halfSellAmount)}`);
+                let quoteQuote = await fetchQuote('So11111111111111111111111111111111111111112', token.quoteTokenMint, Number(sellAmountLamports)) as QuoteResponse;
+                
+                console.log('Quotes:', quoteBase, quoteQuote);
+
+                if (!quoteBase?.outAmount || !quoteQuote?.outAmount) {
+                    throw new Error('Failed to fetch quotes for base or quote token');
+                }
+
                 try {
-                    const targetAmountA = BigInt(sellAmountLamports.toString());
-                    const targetAmountB = BigInt(0); // Assuming we're only selling one token
-                    result = await getInitAmounts(targetAmountA, targetAmountB);
+                    console.log(`Fetching init amounts for targetAmountA: ${quoteBase.outAmount}, targetAmountB: ${quoteQuote.outAmount}`);
+                    result = await getInitAmounts(BigInt(quoteBase.outAmount), BigInt(quoteQuote.outAmount));
                     console.log('Init amounts result:', result);
 
                     initAmount0 = BigInt(result.token_0_amount);
                     initAmount1 = BigInt(result.token_1_amount);
 
                     console.log('Final init amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
-                    console.log('Iterations taken:', result.iterations);
-
-                    // Use initAmount0 and initAmount1 for further processing if needed
                 } catch (error) {
                     console.error('Error getting init amounts:', error);
-                    // Handle the error appropriately, maybe set an error state or show a notification
                     throw new Error('Failed to calculate initial amounts');
                 }
-
+				       // Fetch quote for swapping base token to SOL
+					   console.log(`Fetching quote for base token: ${token.baseTokenMint}, amount: ${Number(quoteBase.outAmount)}`);
+					    quoteBase = await fetchQuote(token.baseTokenMint, 'So11111111111111111111111111111111111111112', Number(quoteBase.outAmount)*2) as QuoteResponse;
+					   
+					   // Fetch quote for swapping quote token to SOL
+					   console.log(`Fetching quote for quote token: ${token.quoteTokenMint}, amount: ${Number(quoteQuote.outAmount)}`);
+					    quoteQuote = await fetchQuote(token.quoteTokenMint, 'So11111111111111111111111111111111111111112', Number(quoteQuote.outAmount)*2) as QuoteResponse;
+console.log('Quotes:', quoteBase, quoteQuote);	
                 // Perform withdraw instruction
-                const withdrawIx = makeWithdrawCpmmInInstruction(
-                    CREATE_CPMM_POOL_PROGRAM,
-                    wallet.publicKey,
-                    getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
-                    poolKeys.poolId,
-                    poolKeys.lpMint,
-                    userBaseTokenAccount,
-                    userQuoteTokenAccount,
-                    poolKeys.vaultA,
-                    poolKeys.vaultB,
-                    mintA,
-                    mintB,
-                    poolKeys.lpMint,
-                    new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1))),
-                    new BN(0),
-                    new BN(0),
-                    (await connection.getAccountInfo(poolKeys.vaultA))!.owner,
-                    (await connection.getAccountInfo(poolKeys.vaultB))!.owner
-                );
+               
 
-                // Create and send transaction
-                const withdrawTx = new Transaction()
-                    .add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333}))
-                    .add(withdrawIx);
-                const withdrawSignature = await wallet.sendTransaction(withdrawTx, connection);
-                await connection.confirmTransaction(withdrawSignature, 'confirmed');
-
-                // Fetch final token balances
-                const finalBaseBalance = initAmount0
-                const finalQuoteBalance = initAmount1
-
-                // Calculate the actual amounts of tokens withdrawn
-                const baseTokenAmountWithdrawn = new BN(finalBaseBalance.toString());
-                const quoteTokenAmountWithdrawn = new BN(finalQuoteBalance.toString());
-				
-                // Fetch quotes for swapping both base and quote tokens to SOL
-                const quoteBase = await fetchQuote(token.baseTokenMint, 'So11111111111111111111111111111111111111112', baseTokenAmountWithdrawn.toNumber())
-
-                const quoteQuote = await fetchQuote(token.quoteTokenMint, 'So11111111111111111111111111111111111111112', quoteTokenAmountWithdrawn.toNumber())
-
-                if (!quoteBase || !quoteQuote) {
-                    throw new Error('Failed to fetch quotes for token swaps');
-                }
                 // Perform swaps
                 let swapResultBase;
                 let swapResultQuote;
@@ -631,6 +613,7 @@ const ai = await connection.getAccountInfo(tokenMint)
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteBase,
                             wrapAndUnwrapSol: true
+							,computeUnitPriceMicroLamports: 33333
                         },
                     });
                 } catch (error) {
@@ -640,6 +623,7 @@ const ai = await connection.getAccountInfo(tokenMint)
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteBase,
                             wrapAndUnwrapSol: true
+							,computeUnitPriceMicroLamports: 33333
                         },
                     });
                 }
@@ -649,6 +633,7 @@ const ai = await connection.getAccountInfo(tokenMint)
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteQuote,
                             wrapAndUnwrapSol: true
+							,computeUnitPriceMicroLamports: 33333
                         },
                     });
                 } catch (error) {
@@ -658,6 +643,7 @@ const ai = await connection.getAccountInfo(tokenMint)
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteQuote,
                             wrapAndUnwrapSol: true
+							,computeUnitPriceMicroLamports: 33333
                         },
                     });
                     console.error('Error during swap:', error);
@@ -701,9 +687,9 @@ const ai = await connection.getAccountInfo(tokenMint)
                     mintA,
                     mintB,
                     poolKeys.lpMint,
-                    new BN(sellAmountLamports.toString()),
-                    baseTokenAmount,
-                    quoteTokenAmount,
+                    new BN(Math.sqrt(Number(quoteBase.outAmount) * Number(quoteQuote.outAmount))),
+					new BN(0),
+                    new BN(0),
                     // @ts-ignore
                     (await connection.getAccountInfo(poolKeys.vaultA)).owner,
                     // @ts-ignore
@@ -716,17 +702,19 @@ const ai = await connection.getAccountInfo(tokenMint)
                     payerKey: wallet.publicKey,
                     recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
                     instructions: [
+
+						ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333}),
                         ...someIxs
                             ],
                 }).compileToV0Message([]);
                 const transaction = new VersionedTransaction(messageV0);
 
-                const signed = await wallet.signAllTransactions([transactionBase, transactionQuote, transaction])
+                const signed = await wallet.signAllTransactions([transaction,transactionBase, transactionQuote])
                 for (const signedTx of signed) {
                     const txId = await connection.sendRawTransaction(signedTx.serialize());
                     console.log(`Transaction sent: ${txId}`);
-                    await connection.confirmTransaction(txId, 'confirmed');
-                    console.log(`Transaction ${txId} confirmed`);
+                    await connection.confirmTransaction(txId, 'recent');
+                    console.log(`Transaction ${txId} recent`);
                 }
 
             } else {
