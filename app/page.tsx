@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { Button, Card, CardBody, Divider, Link, Progress, Tab, Tabs } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 import useCoins from "@/app/hooks/useCoins";
 import { useRouter } from 'next/navigation'
 import ItemFilterBar from "@/components/item-filter-bar";
-import { useAutoAnimate } from '@formkit/auto-animate/react'
+import { useAutoAnimate } from '@formkit/auto-animate/react';
+import { ModalContext } from "@/app/providers";
 
 import Logo from "@/app/assets/images/logo_color.svg";
 import usePairs from "./hooks/usePairs";
@@ -33,6 +34,8 @@ export default function Home() {
     }
   });
 
+  const modalContext = useContext(ModalContext);
+
   return (
     <div>
       {isLoading ? (
@@ -46,7 +49,7 @@ export default function Home() {
             <Image src={Logo.src} alt="Logo" width={150} height={150} className="mb-2 md:hidden" />
             <p className="text-center text-xl opacity-70 pb-6 px-4">The future of crypto is here. Get a jump start on the next big token launch.</p>
             <div className="flex items-center gap-2 pb-10">
-              <Button size="md" color="primary" className="text-lg" aria-label="Get Started">Get Started</Button>
+              <Button size="md" color="primary" className="text-lg" aria-label="How it Works" onPress={() => modalContext?.setOpenModals((prev: any) => [...prev, "howItWorksModal"])}>How it Works</Button>
               <Button size="md" color="secondary" variant="ghost" className="text-lg" aria-label="Lauch Your Own Token" onClick={() => router.push('/launch')}>Lauch Your Own Token</Button>
             </div>
             <Divider />
