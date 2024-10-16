@@ -128,6 +128,8 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi.quoteGet({
 			inputMint: inputMint,
 			outputMint: outputMint,
+			maxAccounts: 15,
+			computeAutoSlippage: true,
 			amount: Math.floor(amount/2),
 			slippageBps: 1000, // 1% slippage
 		  });
@@ -137,8 +139,10 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi2.quoteGet({
 			  inputMint: inputMint,
 			  outputMint: outputMint,
+			  maxAccounts: 15,
 			  amount: Math.floor(amount/2),
 			  slippageBps: 1000, // 1% slippage
+			  computeAutoSlippage: true,
 			});	
 		  return quote;
 		}
@@ -301,7 +305,7 @@ try {
 				let swapResultB;
 				try { 
 				// Perform swaps
-				 swapResultA = await jupiterApi.swapPost({
+				 swapResultA = await jupiterApi.swapInstructionsPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteA,
@@ -311,7 +315,7 @@ try {
 				});
 				} catch (error) {
 					const jupiterApi2 = createJupiterApiClient()
-					 swapResultA = await jupiterApi2.swapPost({
+					 swapResultA = await jupiterApi2.swapInstructionsPost({
 						swapRequest: {
 							userPublicKey: wallet.publicKey.toBase58(),
 							quoteResponse: quoteA,
@@ -321,7 +325,7 @@ try {
 					});
 				}
 				try { 
-				 swapResultB = await jupiterApi.swapPost({
+				 swapResultB = await jupiterApi.swapInstructionsPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
@@ -331,7 +335,7 @@ try {
 				});
 			} catch (error) {
 				const jupiterApi2 = createJupiterApiClient()
-				 swapResultB = await jupiterApi2.swapPost({
+				 swapResultB = await jupiterApi2.swapInstructionsPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
@@ -341,16 +345,35 @@ try {
 				});
 				console.error('Error during swap:', error);
 			}
-				const swapTransactionA = Buffer.from(swapResultA.swapTransaction, 'base64');
-				const swapTransactionB = Buffer.from(swapResultB.swapTransaction, 'base64');
-				
-				var transactionA = VersionedTransaction.deserialize(swapTransactionA);
-				var transactionB = VersionedTransaction.deserialize(swapTransactionB);
-				
-				console.log('Swap Transaction A:', transactionA);
-				console.log('Swap Transaction B:', transactionB);
-				if (!wallet.signAllTransactions) return 
-				// Update tokenAAmount and tokenBAmount with the expected output amounts
+				const deserializeInstruction = (instruction: any) => {
+					return new TransactionInstruction({
+						programId: new PublicKey(instruction.programId),
+						keys: instruction.accounts.map((key: any) => ({
+							pubkey: new PublicKey(key.pubkey),
+							isSigner: key.isSigner,
+							isWritable: key.isWritable,
+						})),
+						data: Buffer.from(instruction.data, "base64"),
+					});
+				};
+
+				const getAddressLookupTableAccounts = async (keys: any) => {
+					const addressLookupTableAccountInfos = await connection.getMultipleAccountsInfo(
+							keys.map((key: any) => new PublicKey(key))
+					);
+
+					return addressLookupTableAccountInfos.reduce((acc: any, accountInfo: any, index: any) => {
+						const addressLookupTableAddress = keys[index];
+						if (accountInfo) {
+							const addressLookupTableAccount = new AddressLookupTableAccount({
+								key: new PublicKey(addressLookupTableAddress),
+								state: AddressLookupTableAccount.deserialize(accountInfo.data),
+							});
+							acc.push(addressLookupTableAccount);
+						}
+						return acc;
+					}, []);
+				};
 				const tokenAAmount = new BN(quoteA.outAmount);
 				const tokenBAmount = new BN(quoteB.outAmount);
 				const anai = await connection.getAccountInfo(getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey))
@@ -389,27 +412,47 @@ try {
 					someIxs.push(ix)
 				// Create separate transactions for setup instructions
 			
-				const messageV0 = new TransactionMessage({
-					payerKey: wallet.publicKey,
-					recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-					instructions: [
-						ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
-						...someIxs
-							],
-				}).compileToV0Message([]);
-				const transaction = new VersionedTransaction(messageV0);
 
-				const signed = await wallet.signAllTransactions([transactionA, transactionB, transaction])
-				let i = 0;
-			for (const signedTx of signed) {
-				const txId = await connection.sendRawTransaction(signedTx.serialize());
-				console.log(`Transaction sent: ${txId}`);
-				if (i == 1){
-				await connection.confirmTransaction(txId, 'finalized');
-				console.log(`Transaction ${txId} confirmed`);
-				}
-				i++;
-			}
+				const processSwapResult = async (swapResult: any, swapResultB: any, someIxs: any) => {
+					const {
+						computeBudgetInstructions,
+						swapInstruction: swapInstructionPayload,
+						addressLookupTableAddresses,
+						setupInstructions
+					} = swapResult;
+					const {
+						computeBudgetInstructions: computeBudgetInstructionsB,
+						swapInstruction: swapInstructionPayloadB,
+						addressLookupTableAddresses: addressLookupTableAddressesB,
+						setupInstructions: setupInstructionsB,
+					} = swapResultB;
+
+					const addressLookupTableAccounts = await getAddressLookupTableAccounts(addressLookupTableAddresses);
+					const addressLookupTableAccountsB = await getAddressLookupTableAccounts(addressLookupTableAddressesB);
+					const blockhash = (await connection.getLatestBlockhash()).blockhash;
+					const messageV0 = new TransactionMessage({
+						payerKey: wallet.publicKey as PublicKey,
+						recentBlockhash: blockhash,
+						instructions: [
+							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
+							...setupInstructions.map(deserializeInstruction),
+							deserializeInstruction(swapInstructionPayload),
+							...setupInstructionsB.map(deserializeInstruction),
+							deserializeInstruction(swapInstructionPayloadB),
+							...someIxs
+						],
+					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
+
+					return new VersionedTransaction(messageV0);
+				};
+
+				const ft = await processSwapResult(swapResultA, swapResultB, someIxs);
+				if (!wallet.signAllTransactions) return 
+				// Update tokenAAmount and tokenBAmount with the expected output amounts
+				
+
+                const signed = await provider.sendAndConfirm(ft)
+				console.log(signed)
 			}
 			else {
 
@@ -612,7 +655,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                 let swapResultBase;
                 let swapResultQuote;
                 try { 
-                    swapResultBase = await jupiterApi.swapPost({
+                    swapResultBase = await jupiterApi.swapInstructionsPost({
                         swapRequest: {
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteBase,
@@ -622,7 +665,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     });
                 } catch (error) {
                     const jupiterApi2 = createJupiterApiClient()
-                    swapResultBase = await jupiterApi2.swapPost({
+                    swapResultBase = await jupiterApi2.swapInstructionsPost({
                         swapRequest: {
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteBase,
@@ -632,7 +675,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     });
                 }
                 try { 
-                    swapResultQuote = await jupiterApi.swapPost({
+                    swapResultQuote = await jupiterApi.swapInstructionsPost({
                         swapRequest: {
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteQuote,
@@ -642,7 +685,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     });
                 } catch (error) {
                     const jupiterApi2 = createJupiterApiClient()
-                    swapResultQuote = await jupiterApi2.swapPost({
+                    swapResultQuote = await jupiterApi2.swapInstructionsPost({
                         swapRequest: {
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteQuote,
@@ -652,17 +695,37 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     });
                     console.error('Error during swap:', error);
                 }
-                // Deserialize the swap transactions
-                const swapTransactionBase = Buffer.from(swapResultBase.swapTransaction, 'base64');
-                const swapTransactionQuote = Buffer.from(swapResultQuote.swapTransaction, 'base64');
-                
-                var transactionBase = VersionedTransaction.deserialize(swapTransactionBase);
-                var transactionQuote = VersionedTransaction.deserialize(swapTransactionQuote);
-                
-                console.log('Swap Transaction Base:', transactionBase);
-                console.log('Swap Transaction Quote:', transactionQuote);
-                if (!wallet.signAllTransactions) return 
-                // Update baseTokenAmount and quoteTokenAmount with the expected output amounts
+
+                const deserializeInstruction = (instruction: any) => {
+                    return new TransactionInstruction({
+                        programId: new PublicKey(instruction.programId),
+                        keys: instruction.accounts.map((key: any) => ({
+                            pubkey: new PublicKey(key.pubkey),
+                            isSigner: key.isSigner,
+                            isWritable: key.isWritable,
+                        })),
+                        data: Buffer.from(instruction.data, "base64"),
+                    });
+                };
+
+                const getAddressLookupTableAccounts = async (keys: any) => {
+                    const addressLookupTableAccountInfos = await connection.getMultipleAccountsInfo(
+                        keys.map((key: any) => new PublicKey(key))
+                    );
+
+                    return addressLookupTableAccountInfos.reduce((acc: any, accountInfo: any, index: any) => {
+                        const addressLookupTableAddress = keys[index];
+                        if (accountInfo) {
+                            const addressLookupTableAccount = new AddressLookupTableAccount({
+                                key: new PublicKey(addressLookupTableAddress),
+                                state: AddressLookupTableAccount.deserialize(accountInfo.data),
+                            });
+                            acc.push(addressLookupTableAccount);
+                        }
+                        return acc;
+                    }, []);
+                };
+
                 const baseTokenAmount = new BN(quoteBase.outAmount);
                 const quoteTokenAmount = new BN(quoteQuote.outAmount);
                 const anai = await connection.getAccountInfo(getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey))
@@ -678,7 +741,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     );
                 }
 
-                let ix = makeWithdrawCpmmInInstruction(
+                const withdrawIx = makeWithdrawCpmmInInstruction(
                     CREATE_CPMM_POOL_PROGRAM,
                     wallet.publicKey,
                     getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
@@ -692,34 +755,53 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     mintB,
                     poolKeys.lpMint,
                     new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1))).div(new BN(2)),
-					new BN(0),
+                    new BN(0),
                     new BN(0),
                     // @ts-ignore
                     (await connection.getAccountInfo(poolKeys.vaultA)).owner,
                     // @ts-ignore
                     (await connection.getAccountInfo(poolKeys.vaultB)).owner
                 );
-                someIxs.push(ix)
-                // Create separate transactions for setup instructions
-            
-                const messageV0 = new TransactionMessage({
-                    payerKey: wallet.publicKey,
-                    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-                    instructions: [
+                someIxs.push(withdrawIx)
 
-						ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
-                        ...someIxs
-                            ],
-                }).compileToV0Message([]);
-                const transaction = new VersionedTransaction(messageV0);
+                const processSwapResult = async (swapResultBase: any, swapResultQuote: any, someIxs: any) => {
+                    const {
+                        computeBudgetInstructions: computeBudgetInstructionsBase,
+                        swapInstruction: swapInstructionPayloadBase,
+                        addressLookupTableAddresses: addressLookupTableAddressesBase,
+                        setupInstructions: setupInstructionsBase,
+                    } = swapResultBase;
+                    const {
+                        computeBudgetInstructions: computeBudgetInstructionsQuote,
+                        swapInstruction: swapInstructionPayloadQuote,
+                        addressLookupTableAddresses: addressLookupTableAddressesQuote,
+                        setupInstructions: setupInstructionsQuote,
+                    } = swapResultQuote;
 
-                const signed = await wallet.signAllTransactions([transaction,transactionBase, transactionQuote])
-                for (const signedTx of signed) {
-                    const txId = await connection.sendRawTransaction(signedTx.serialize());
-                    console.log(`Transaction sent: ${txId}`);
-                    await connection.confirmTransaction(txId, 'confirmed');
-                    console.log(`Transaction ${txId} confirmed`);
-                }
+                    const addressLookupTableAccountsBase = await getAddressLookupTableAccounts(addressLookupTableAddressesBase);
+                    const addressLookupTableAccountsQuote = await getAddressLookupTableAccounts(addressLookupTableAddressesQuote);
+                    const blockhash = (await connection.getLatestBlockhash()).blockhash;
+                    const messageV0 = new TransactionMessage({
+                        payerKey: wallet.publicKey as PublicKey,
+                        recentBlockhash: blockhash,
+                        instructions: [
+                            ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
+                            ...someIxs,
+                            ...setupInstructionsBase.map(deserializeInstruction),
+                            deserializeInstruction(swapInstructionPayloadBase),
+                            ...setupInstructionsQuote.map(deserializeInstruction),
+                            deserializeInstruction(swapInstructionPayloadQuote),
+                        ],
+                    }).compileToV0Message([...addressLookupTableAccountsBase, ...addressLookupTableAccountsQuote])
+
+                    return new VersionedTransaction(messageV0);
+                };
+
+                const transaction = await processSwapResult(swapResultBase, swapResultQuote, someIxs);
+                if (!wallet.signAllTransactions) return;
+
+                const signed = await provider.sendAndConfirm(transaction)
+				console.log(signed)
 
             } else {
 
