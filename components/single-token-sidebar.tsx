@@ -242,14 +242,14 @@ console.log(token)
 				const quoteA = await fetchQuote(
 					'So11111111111111111111111111111111111111112', // SOL mint address
 					mintA.toString(),
-					Number(amountLamports)
+					Number(amountLamports) * 1.01
 				);
 				
 				// Fetch quote for swapping SOL to tokenB
 				const quoteB = await fetchQuote(
 					'So11111111111111111111111111111111111111112', // SOL mint address
 					mintB.toString(),
-					Number(amountLamports)
+					Number(amountLamports) * 1.01
 				);
 				
 				if (!quoteA || !quoteB) {
