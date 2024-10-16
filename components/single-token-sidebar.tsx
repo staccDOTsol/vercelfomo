@@ -128,7 +128,7 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi.quoteGet({
 			inputMint: inputMint,
 			outputMint: outputMint,
-			maxAccounts: 12,
+			maxAccounts: 18,
 			computeAutoSlippage: true,
 			amount: Math.floor(amount/2),
 			slippageBps: 1000, // 1% slippage
@@ -139,7 +139,7 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi2.quoteGet({
 			  inputMint: inputMint,
 			  outputMint: outputMint,
-			  maxAccounts: 12,
+			  maxAccounts: 18,
 			  amount: Math.floor(amount/2),
 			  slippageBps: 1000, // 1% slippage
 			  computeAutoSlippage: true,
@@ -436,29 +436,38 @@ try {
 						payerKey: wallet.publicKey as PublicKey,
 						recentBlockhash: blockhash,
 						instructions: [
-							...computeBudgetInstructions.map(deserializeInstruction),
-							...setupInstructions.map(deserializeInstruction),
+							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
+					
 							deserializeInstruction(swapInstructionPayload),
 						//	...(cleanupInstruction ? [deserializeInstruction(cleanupInstruction)] : []),
-							...setupInstructionsB.map(deserializeInstruction),
 							deserializeInstruction(swapInstructionPayloadB),
 					//		...(cleanupInstructionB ? [deserializeInstruction(cleanupInstructionB)] : []),
 							...someIxs
 						],
 					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
-
-					return new VersionedTransaction(messageV0);
+					const messagev02 = new TransactionMessage({	
+						payerKey: wallet.publicKey as PublicKey,
+						recentBlockhash: blockhash,
+						instructions: [
+							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
+						...setupInstructions.map(deserializeInstruction),
+						...setupInstructionsB.map(deserializeInstruction),
+						]
+					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
+					return [ new VersionedTransaction(messagev02),new VersionedTransaction(messageV0)];
 				};
 
-				const ft = await processSwapResult(swapResultA, swapResultB, someIxs);
-				if (!wallet.signTransaction) return 
-				// Update tokenAAmount and tokenBAmount with the expected output amounts
-				const sim = await connection.simulateTransaction(ft)
-				console.log(sim)
-				const signed = await wallet.signTransaction(ft)
+                const transactions = await processSwapResult(swapResultA, swapResultB, someIxs);
+                if (!wallet.signAllTransactions) return;
+				const signed = await wallet.signAllTransactions(transactions)
 				console.log(signed)		
-				const sig = await connection.sendRawTransaction(signed.serialize())
+				const sig = await connection.sendRawTransaction(signed[0].serialize())
 				console.log(sig)
+				const awaited = await connection.confirmTransaction(sig, "confirmed")
+				
+				const sig2 = await connection.sendRawTransaction(signed[1].serialize())
+				console.log(sig, awaited, sig2)
+
 			}
 			else {
 
@@ -793,8 +802,8 @@ console.log('Quotes:', quoteBase, quoteQuote);
                         payerKey: wallet.publicKey as PublicKey,
                         recentBlockhash: blockhash,
                         instructions: [
-							...computeBudgetInstructionsBase.map(deserializeInstruction),
-                            ...someIxs,
+
+							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),                            ...someIxs,
                             ...setupInstructionsBase.map(deserializeInstruction),
                             deserializeInstruction(swapInstructionPayloadBase),
 							//...(cleanupInstructionBase ? [deserializeInstruction(cleanupInstructionBase)] : []),
@@ -803,18 +812,28 @@ console.log('Quotes:', quoteBase, quoteQuote);
 						//	...(cleanupInstructionQuote ? [deserializeInstruction(cleanupInstructionQuote)] : []),
                         ],
                     }).compileToV0Message([...addressLookupTableAccountsBase, ...addressLookupTableAccountsQuote])
+					const messagev02 = new TransactionMessage({	
+						payerKey: wallet.publicKey as PublicKey,
+						recentBlockhash: blockhash,
+						instructions: [
+							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
+						...setupInstructionsBase.map(deserializeInstruction),
+						...setupInstructionsQuote.map(deserializeInstruction),
+						]
+					}).compileToV0Message([...addressLookupTableAccountsBase, ...addressLookupTableAccountsQuote])
+					return [ new VersionedTransaction(messagev02),new VersionedTransaction(messageV0)];
+				};
 
-                    return new VersionedTransaction(messageV0);
-                };
-
-                const transaction = await processSwapResult(swapResultBase, swapResultQuote, someIxs);
-                if (!wallet.signTransaction) return;
-				const sim = await connection.simulateTransaction(transaction)
-				console.log(sim)
-				const signed = await wallet.signTransaction(transaction)
+                const transactions = await processSwapResult(swapResultBase, swapResultQuote, someIxs);
+                if (!wallet.signAllTransactions) return;
+				const signed = await wallet.signAllTransactions(transactions)
 				console.log(signed)		
-				const sig = await connection.sendRawTransaction(signed.serialize())
+				const sig = await connection.sendRawTransaction(signed[0].serialize())
 				console.log(sig)
+				const awaited = await connection.confirmTransaction(sig, "confirmed")
+				
+				const sig2 = await connection.sendRawTransaction(signed[1].serialize())
+				console.log(sig, awaited, sig2)
 
             } else {
 
