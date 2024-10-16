@@ -402,7 +402,7 @@ try {
 					mintA,
 					mintB,
 					poolKeys.lpMint,
-                    (new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1)))).div(new BN(100).mul(new BN(40))),
+                    (new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1)))),
 					new BN(Number.MAX_SAFE_INTEGER),
 					new BN(Number.MAX_SAFE_INTEGER),
 					// @ts-ignore
@@ -418,13 +418,15 @@ try {
 						computeBudgetInstructions,
 						swapInstruction: swapInstructionPayload,
 						addressLookupTableAddresses,
-						setupInstructions
+						setupInstructions,
+						cleanupInstruction
 					} = swapResult;
 					const {
 						computeBudgetInstructions: computeBudgetInstructionsB,
 						swapInstruction: swapInstructionPayloadB,
 						addressLookupTableAddresses: addressLookupTableAddressesB,
 						setupInstructions: setupInstructionsB,
+						cleanupInstruction: cleanupInstructionB
 					} = swapResultB;
 
 					const addressLookupTableAccounts = await getAddressLookupTableAccounts(addressLookupTableAddresses);
@@ -437,8 +439,10 @@ try {
 							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
 							...setupInstructions.map(deserializeInstruction),
 							deserializeInstruction(swapInstructionPayload),
+							...(cleanupInstruction ? [deserializeInstruction(cleanupInstruction)] : []),
 							...setupInstructionsB.map(deserializeInstruction),
 							deserializeInstruction(swapInstructionPayloadB),
+							...(cleanupInstructionB ? [deserializeInstruction(cleanupInstructionB)] : []),
 							...someIxs
 						],
 					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
@@ -770,12 +774,14 @@ console.log('Quotes:', quoteBase, quoteQuote);
                         swapInstruction: swapInstructionPayloadBase,
                         addressLookupTableAddresses: addressLookupTableAddressesBase,
                         setupInstructions: setupInstructionsBase,
+						cleanupInstruction: cleanupInstructionBase
                     } = swapResultBase;
                     const {
                         computeBudgetInstructions: computeBudgetInstructionsQuote,
                         swapInstruction: swapInstructionPayloadQuote,
                         addressLookupTableAddresses: addressLookupTableAddressesQuote,
                         setupInstructions: setupInstructionsQuote,
+						cleanupInstruction: cleanupInstructionQuote
                     } = swapResultQuote;
 
                     const addressLookupTableAccountsBase = await getAddressLookupTableAccounts(addressLookupTableAddressesBase);
@@ -789,8 +795,10 @@ console.log('Quotes:', quoteBase, quoteQuote);
                             ...someIxs,
                             ...setupInstructionsBase.map(deserializeInstruction),
                             deserializeInstruction(swapInstructionPayloadBase),
+							...(cleanupInstructionBase ? [deserializeInstruction(cleanupInstructionBase)] : []),
                             ...setupInstructionsQuote.map(deserializeInstruction),
                             deserializeInstruction(swapInstructionPayloadQuote),
+							...(cleanupInstructionQuote ? [deserializeInstruction(cleanupInstructionQuote)] : []),
                         ],
                     }).compileToV0Message([...addressLookupTableAccountsBase, ...addressLookupTableAccountsQuote])
 
