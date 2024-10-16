@@ -439,9 +439,7 @@ try {
 							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
 					
 							deserializeInstruction(swapInstructionPayload),
-							...(cleanupInstruction ? [deserializeInstruction(cleanupInstruction)] : []),
 							deserializeInstruction(swapInstructionPayloadB),
-							...(cleanupInstructionB ? [deserializeInstruction(cleanupInstructionB)] : []),
 							...someIxs
 						],
 					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
@@ -454,7 +452,16 @@ try {
 						...setupInstructionsB.map(deserializeInstruction),
 						]
 					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
-					return [ new VersionedTransaction(messagev02),new VersionedTransaction(messageV0)];
+					const messagev022z = new TransactionMessage({	
+						payerKey: wallet.publicKey as PublicKey,
+						recentBlockhash: blockhash,
+						instructions: [
+								ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
+								...(cleanupInstruction ? [deserializeInstruction(cleanupInstruction)] : []),
+								...(cleanupInstructionB ? [deserializeInstruction(cleanupInstructionB)] : []),
+						]
+					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
+					return [ new VersionedTransaction(messagev02),new VersionedTransaction(messageV0), new VersionedTransaction(messagev022z)];
 				};
 
                 const transactions = await processSwapResult(swapResultA, swapResultB, someIxs);
@@ -806,10 +813,8 @@ console.log('Quotes:', quoteBase, quoteQuote);
 							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),                            ...someIxs,
                             ...setupInstructionsBase.map(deserializeInstruction),
                             deserializeInstruction(swapInstructionPayloadBase),
-							...(cleanupInstructionBase ? [deserializeInstruction(cleanupInstructionBase)] : []),
                             ...setupInstructionsQuote.map(deserializeInstruction),
                             deserializeInstruction(swapInstructionPayloadQuote),
-							...(cleanupInstructionQuote ? [deserializeInstruction(cleanupInstructionQuote)] : []),
                         ],
                     }).compileToV0Message([...addressLookupTableAccountsBase, ...addressLookupTableAccountsQuote])
 					const messagev02 = new TransactionMessage({	
@@ -821,7 +826,17 @@ console.log('Quotes:', quoteBase, quoteQuote);
 						...setupInstructionsQuote.map(deserializeInstruction),
 						]
 					}).compileToV0Message([...addressLookupTableAccountsBase, ...addressLookupTableAccountsQuote])
-					return [ new VersionedTransaction(messagev02),new VersionedTransaction(messageV0)];
+					const messagev022z = new TransactionMessage({	
+						payerKey: wallet.publicKey as PublicKey,
+						recentBlockhash: blockhash,
+						instructions: [
+							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
+							...(cleanupInstructionBase ? [deserializeInstruction(cleanupInstructionBase)] : []),
+							...(cleanupInstructionQuote ? [deserializeInstruction(cleanupInstructionQuote)] : []),
+						]
+					}).compileToV0Message([...addressLookupTableAccountsBase, ...addressLookupTableAccountsQuote])
+					
+					return [ new VersionedTransaction(messagev02),new VersionedTransaction(messageV0), new VersionedTransaction(messagev022z)];
 				};
 
                 const transactions = await processSwapResult(swapResultBase, swapResultQuote, someIxs);
