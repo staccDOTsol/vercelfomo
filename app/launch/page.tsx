@@ -6039,6 +6039,14 @@ const [error, setError] = useState<string | null>(null);
 		const telegram = values.telegram;
 		const discord = values.discord;
 		const otherLink = values.otherLink;
+		const tokenName = values.tokenName;
+		const tokenSymbol = values.tokenSymbol;
+		const tokenDescription = values.description;
+		const icon = values.icon;
+		const banner = values.banner;
+		const initialBuy = values.initialBuy;
+		const dex = values.dex;
+		const agreeTerms = values.agreeTerms;
 
 		console.log('Form values set for token creation:', {
 			tokenName,
