@@ -306,7 +306,7 @@ try {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteA,
 						wrapAndUnwrapSol: true
-						,computeUnitPriceMicroLamports: 333333
+						,computeUnitPriceMicroLamports: 633333
 					},
 				});
 				} catch (error) {
@@ -316,7 +316,7 @@ try {
 							userPublicKey: wallet.publicKey.toBase58(),
 							quoteResponse: quoteA,
 							wrapAndUnwrapSol: true
-							,computeUnitPriceMicroLamports: 333333
+							,computeUnitPriceMicroLamports: 633333
 						},
 					});
 				}
@@ -326,7 +326,7 @@ try {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
 						wrapAndUnwrapSol: true
-						,computeUnitPriceMicroLamports: 333333
+						,computeUnitPriceMicroLamports: 633333
 					},
 				});
 			} catch (error) {
@@ -336,7 +336,7 @@ try {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
 						wrapAndUnwrapSol: true
-						,computeUnitPriceMicroLamports: 333333
+						,computeUnitPriceMicroLamports: 633333
 					},
 				});
 				console.error('Error during swap:', error);
@@ -393,7 +393,7 @@ try {
 					payerKey: wallet.publicKey,
 					recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
 					instructions: [
-						ComputeBudgetProgram.setComputeUnitPrice({microLamports: 333333}),
+						ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
 						...someIxs
 							],
 				}).compileToV0Message([]);
@@ -427,7 +427,7 @@ try {
 			})
 			.instruction();
 				const tx = new Transaction();
-				tx.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 333333}))
+				tx.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}))
 				const ai2 = await connection.getAccountInfo(getAssociatedTokenAddressSync(new PublicKey(token.mint), wallet.publicKey, true, ai?.owner || TOKEN_PROGRAM_ID))
 				if (!ai2){
 				tx.add(createAssociatedTokenAccountInstruction(
@@ -613,7 +613,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteBase,
                             wrapAndUnwrapSol: true
-							,computeUnitPriceMicroLamports: 333333
+							,computeUnitPriceMicroLamports: 633333
                         },
                     });
                 } catch (error) {
@@ -623,7 +623,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteBase,
                             wrapAndUnwrapSol: true
-							,computeUnitPriceMicroLamports: 333333
+							,computeUnitPriceMicroLamports: 633333
                         },
                     });
                 }
@@ -633,7 +633,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteQuote,
                             wrapAndUnwrapSol: true
-							,computeUnitPriceMicroLamports: 333333
+							,computeUnitPriceMicroLamports: 633333
                         },
                     });
                 } catch (error) {
@@ -643,7 +643,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                             userPublicKey: wallet.publicKey.toBase58(),
                             quoteResponse: quoteQuote,
                             wrapAndUnwrapSol: true
-							,computeUnitPriceMicroLamports: 333333
+							,computeUnitPriceMicroLamports: 633333
                         },
                     });
                     console.error('Error during swap:', error);
@@ -703,7 +703,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                     recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
                     instructions: [
 
-						ComputeBudgetProgram.setComputeUnitPrice({microLamports: 333333}),
+						ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
                         ...someIxs
                             ],
                 }).compileToV0Message([]);
@@ -737,7 +737,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
                 })
                 .instruction();
                 const tx = new Transaction()
-				.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 333333})).
+				.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333})).
 				add(ix);
                 const signature = await wallet.sendTransaction(tx, connection);
                 console.log('Transaction signature', signature);
