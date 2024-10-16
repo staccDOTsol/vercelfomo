@@ -204,7 +204,7 @@ export default function SingleTokenSidebar({
 				ai?.owner || TOKEN_PROGRAM_ID
             );
 
-            const  amountLamports = new BN(parseFloat(amount) * 10 ** 9);
+            const  amountLamports = new BN(parseFloat(amount) * 10 ** 9)
 			const ammAcc = await connection.getAccountInfo(bondingCurvePda)
 			const data = ammAcc?.data.slice(8)
 			const amm = new LPAMM(
@@ -256,9 +256,7 @@ console.log(token)
 					Number(amountLamports)
 				);
 				
-				if (!quoteA || !quoteB) {
-					throw new Error('Failed to fetch quotes');
-				}
+				if (quoteA && quoteB) {
 				
 async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxIterations: number = 500) {
     const response = await fetch('https://superswap.fomo3d.fun/deposit-estimate', {
@@ -480,6 +478,173 @@ try {
 
 			}
 			else {
+				console.log('no quotes - assuming both and b are bonding curves')
+			// Handle bonding curve for both tokens
+			const handleBondingCurve = async (tokenMint: PublicKey) => {
+				const [bondingCurvePda] = PublicKey.findProgramAddressSync(
+					[Buffer.from('bonding-curve'), tokenMint.toBuffer()],
+					PROGRAM_ID
+				);
+				const ai = await connection.getAccountInfo(tokenMint);
+				const userTokenAccount = getAssociatedTokenAddressSync(
+					tokenMint,
+					wallet.publicKey as PublicKey,
+					true,
+					ai?.owner || TOKEN_PROGRAM_ID
+				);
+				const bondingCurveTokenAccount = getAssociatedTokenAddressSync(
+					tokenMint,
+					bondingCurvePda,
+					true,
+					ai?.owner || TOKEN_PROGRAM_ID
+				);
+				const ammAcc = await connection.getAccountInfo(bondingCurvePda);
+				const data = ammAcc?.data.slice(8);
+				const amm = new LPAMM(
+					data?.readBigUInt64LE(0) || BigInt(0),
+					data?.readBigUInt64LE(8) || BigInt(0),
+					data?.readBigUInt64LE(16) || BigInt(0),
+					data?.readBigUInt64LE(24) || BigInt(0),
+					data?.readBigUInt64LE(32) || BigInt(0)
+				);
+				const  amountLamports = new BN(parseFloat(amount) * 10 ** 9).div(new BN(2))
+				const { tokenAmount } = amm.getBuyTokensWithSol(BigInt(amountLamports.toString()));
+				
+				// @ts-ignore
+				let ix = await program.methods
+					.buy(new BN(tokenAmount.toString()), new BN(Number.MAX_SAFE_INTEGER))
+					.accounts({
+						user: wallet.publicKey,
+						mint: tokenMint,
+						bondingCurve: bondingCurvePda,
+						global: globalPda,
+						bondingCurveTokenAccount: bondingCurveTokenAccount,
+						userTokenAccount: userTokenAccount,
+						systemProgram: SystemProgram.programId,
+						tokenProgram: ai?.owner || TOKEN_PROGRAM_ID,
+						sysvarRecentSlothashes: SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
+						hydra: new PublicKey('LkMTMqZR2maLzzy7GdYJmUnbE2j8jLyEHGbckYoFoMo'),
+						program: PROGRAM_ID,
+					})
+					.instruction();
+				
+				return {ix, tokenAmount};
+			};
+
+			const tokenAMint = new PublicKey(token.baseTokenMint);
+			const tokenBMint = new PublicKey(token.quoteTokenMint);
+			const isFront = new BN(tokenAMint.toBuffer()).lte(new BN(tokenBMint.toBuffer()));
+			const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint];
+
+			const {ix: ixA, tokenAmount: initAmount0} = await handleBondingCurve(mintA);
+			const {ix: ixB, tokenAmount: initAmount1} = await handleBondingCurve(mintB);
+
+			const tx = new Transaction();
+			tx.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}));
+
+			// Add create ATA instructions if necessary
+			const addCreateAtaIx = async (mint: PublicKey) => {
+				const ai = await connection.getAccountInfo(mint);
+				const ata = getAssociatedTokenAddressSync(mint, wallet.publicKey as PublicKey, true, ai?.owner || TOKEN_PROGRAM_ID);
+				const ataInfo = await connection.getAccountInfo(ata);
+				if (!ataInfo) {
+					tx.add(createAssociatedTokenAccountInstruction(
+						wallet.publicKey as PublicKey,
+						ata,
+						wallet.publicKey as PublicKey,
+						mint,
+						ai?.owner || TOKEN_PROGRAM_ID
+					));
+				}
+			};
+
+			await addCreateAtaIx(mintA);
+			await addCreateAtaIx(mintB);
+
+			tx.add(ixA);
+			tx.add(ixB);
+			const anai = await connection.getAccountInfo(getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey));
+			const someIxs: TransactionInstruction[] = [];
+			if (!anai) {
+				someIxs.push(
+					createAssociatedTokenAccountInstruction(
+						wallet.publicKey,
+						getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey),
+						wallet.publicKey,
+						poolKeys.lpMint
+					)
+				);
+			}
+
+async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxIterations: number = 500) {
+    const response = await fetch('https://superswap.fomo3d.fun/deposit-estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            token_0_amount: Number(targetAmount0.toString()),
+            token_1_amount: Number(targetAmount1.toString()),
+            pool_address: poolKeys.poolId.toString()
+        }),
+        })
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch init amounts");
+    }
+
+    return await response.json();
+}
+			// Fetch init amounts from the API
+			let initAmount00 = BigInt(0);
+			let initAmount11 = BigInt(0);
+			try {
+				const result = await getInitAmounts(BigInt(initAmount0), BigInt(initAmount1));
+				console.log('Init amounts result:', result);
+
+				initAmount00 = BigInt(result.token_0_amount);
+				initAmount11 = BigInt(result.token_1_amount);
+
+				console.log('Final init amounts:', { initAmount0: initAmount00.toString(), initAmount1: initAmount11.toString() });
+				console.log('Iterations taken:', result.iterations);
+			} catch (error) {
+				console.error('Error getting init amounts:', error);
+				throw new Error('Failed to calculate initial amounts');
+			}
+			let ix = makeDepositCpmmInInstruction(
+				CREATE_CPMM_POOL_PROGRAM,
+				wallet.publicKey,
+				getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
+				poolKeys.poolId,
+				poolKeys.lpMint,
+				getAssociatedTokenAddressSync(mintA, wallet.publicKey),
+				getAssociatedTokenAddressSync(mintB, wallet.publicKey),
+				poolKeys.vaultA,
+				poolKeys.vaultA,
+				mintA,
+				mintB,
+				poolKeys.lpMint,
+				(new BN(Math.sqrt(Number(initAmount00) * Number(initAmount11)))).div(new BN(2)),
+				new BN(Number.MAX_SAFE_INTEGER),
+				new BN(Number.MAX_SAFE_INTEGER),
+				// @ts-ignore
+				(await connection.getAccountInfo(poolKeys.vaultA)).owner,
+				// @ts-ignore
+				(await connection.getAccountInfo(poolKeys.vaultA)).owner
+			);
+			someIxs.push(ix);
+
+			tx.add(...someIxs);
+			if (!wallet.signTransaction) return 
+			tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+			tx.feePayer = wallet.publicKey
+			const sgined = await wallet.signTransaction(tx);
+			const signature = await connection.sendRawTransaction(sgined.serialize())
+			console.log('Transaction signature', signature);
+			const awaited = await connection.confirmTransaction(signature, 'processed');
+			
+			}
+			}
+			
+			else {
 
 			// @ts-ignore
 			let ix = await program.methods
@@ -516,7 +681,197 @@ try {
 				await connection.confirmTransaction(signature, 'processed');
 			}
         } catch (error) {
-            console.error('Error during buy:', error);
+
+const PROGRAM_ID = new PublicKey("65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9")
+const provider = new AnchorProvider(connection, aw, {});
+const IDL = await Program.fetchIdl(PROGRAM_ID, provider)
+const	program =  new Program(IDL as any, provider);
+
+				console.log('no quotes - assuming both and b are bonding curves')
+			// Handle bonding curve for both tokens
+			const handleBondingCurve = async (tokenMint: PublicKey) => {
+				const [bondingCurvePda] = PublicKey.findProgramAddressSync(
+					[Buffer.from('bonding-curve'), tokenMint.toBuffer()],
+					PROGRAM_ID
+				);
+				const [globalPda] = PublicKey.findProgramAddressSync(
+					[Buffer.from('global')],
+					PROGRAM_ID
+				);
+			
+	
+				const ai = await connection.getAccountInfo(tokenMint);
+				const userTokenAccount = getAssociatedTokenAddressSync(
+					tokenMint,
+					wallet.publicKey as PublicKey,
+					true,
+					ai?.owner || TOKEN_PROGRAM_ID
+				);
+				const bondingCurveTokenAccount = getAssociatedTokenAddressSync(
+					tokenMint,
+					bondingCurvePda,
+					true,
+					ai?.owner || TOKEN_PROGRAM_ID
+				);
+				const ammAcc = await connection.getAccountInfo(bondingCurvePda);
+				const data = ammAcc?.data.slice(8);
+				const amm = new LPAMM(
+					data?.readBigUInt64LE(0) || BigInt(0),
+					data?.readBigUInt64LE(8) || BigInt(0),
+					data?.readBigUInt64LE(16) || BigInt(0),
+					data?.readBigUInt64LE(24) || BigInt(0),
+					data?.readBigUInt64LE(32) || BigInt(0)
+				);
+				const  amountLamports = new BN(parseFloat(amount) * 10 ** 9).div(new BN(2));
+
+				const { tokenAmount } = amm.getBuyTokensWithSol(BigInt(amountLamports.toString()));
+				
+				// @ts-ignore
+				let ix = await program.methods
+					.buy(new BN(tokenAmount.toString()), new BN(Number.MAX_SAFE_INTEGER))
+					.accounts({
+						user: wallet.publicKey,
+						mint: tokenMint,
+						bondingCurve: bondingCurvePda,
+						global: globalPda,
+						bondingCurveTokenAccount: bondingCurveTokenAccount,
+						userTokenAccount: userTokenAccount,
+						systemProgram: SystemProgram.programId,
+						tokenProgram: ai?.owner || TOKEN_PROGRAM_ID,
+						sysvarRecentSlothashes: SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
+						hydra: new PublicKey('LkMTMqZR2maLzzy7GdYJmUnbE2j8jLyEHGbckYoFoMo'),
+						program: PROGRAM_ID,
+					})
+					.instruction();
+				
+				return {ix, tokenAmount};
+			};
+
+			const tokenAMint = new PublicKey(token.baseTokenMint);
+			const tokenBMint = new PublicKey(token.quoteTokenMint);
+			const isFront = new BN(tokenAMint.toBuffer()).lte(new BN(tokenBMint.toBuffer()));
+			const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint];
+
+			const {ix: ixA, tokenAmount: initAmount0} = await handleBondingCurve(mintA);
+			const {ix: ixB, tokenAmount: initAmount1} = await handleBondingCurve(mintB);
+
+			const tx = new Transaction();
+			tx.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}));
+
+			// Add create ATA instructions if necessary
+			const addCreateAtaIx = async (mint: PublicKey) => {
+				const ai = await connection.getAccountInfo(mint);
+				const ata = getAssociatedTokenAddressSync(mint, wallet.publicKey as PublicKey, true, ai?.owner || TOKEN_PROGRAM_ID);
+				const ataInfo = await connection.getAccountInfo(ata);
+				if (!ataInfo) {
+					tx.add(createAssociatedTokenAccountInstruction(
+						wallet.publicKey as PublicKey,
+						ata,
+						wallet.publicKey as PublicKey,
+						mint,
+						ai?.owner || TOKEN_PROGRAM_ID
+					));
+				}
+			};
+
+			await addCreateAtaIx(mintA);
+			await addCreateAtaIx(mintB);;
+			
+			const configId = 0;
+			const [ammConfigKey, _bump] = PublicKey.findProgramAddressSync(
+				[Buffer.from('amm_config'), new BN(configId).toArrayLike(Buffer, 'be', 8)],
+				CREATE_CPMM_POOL_PROGRAM
+			);
+			const poolKeys = getCreatePoolKeys({
+				creator: wallet.publicKey,
+				programId: CREATE_CPMM_POOL_PROGRAM,
+				mintA,
+				mintB,
+				configId: ammConfigKey
+			});
+			poolKeys.configId = ammConfigKey;
+			tx.add(ixA);
+			tx.add(ixB);
+			const anai = await connection.getAccountInfo(getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey));
+			const someIxs: TransactionInstruction[] = [];
+			if (!anai) {
+				someIxs.push(
+					createAssociatedTokenAccountInstruction(
+						wallet.publicKey,
+						getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey),
+						wallet.publicKey,
+						poolKeys.lpMint
+					)
+				);
+			}
+
+async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxIterations: number = 500) {
+    const response = await fetch('https://superswap.fomo3d.fun/deposit-estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            token_0_amount: Number(targetAmount0.toString()),
+            token_1_amount: Number(targetAmount1.toString()),
+            pool_address: poolKeys.poolId.toString()
+        }),
+        })
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch init amounts");
+    }
+
+    return await response.json();
+}
+			// Fetch init amounts from the API
+			let initAmount00 = BigInt(0);
+			let initAmount11 = BigInt(0);
+			try {
+				const result = await getInitAmounts(BigInt(initAmount0), BigInt(initAmount1));
+				console.log('Init amounts result:', result);
+
+				initAmount00 = BigInt(result.token_0_amount);
+				initAmount11 = BigInt(result.token_1_amount);
+
+				console.log('Final init amounts:', { initAmount0: initAmount00.toString(), initAmount1: initAmount11.toString() });
+				console.log('Iterations taken:', result.iterations);
+			} catch (error) {
+				console.error('Error getting init amounts:', error);
+				throw new Error('Failed to calculate initial amounts');
+			}
+
+			let ix = makeDepositCpmmInInstruction(
+				CREATE_CPMM_POOL_PROGRAM,
+				wallet.publicKey,
+				getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
+				poolKeys.poolId,
+				poolKeys.lpMint,
+				getAssociatedTokenAddressSync(mintA, wallet.publicKey),
+				getAssociatedTokenAddressSync(mintB, wallet.publicKey),
+				poolKeys.vaultA,
+				poolKeys.vaultA,
+				mintA,
+				mintB,
+				poolKeys.lpMint,
+				(new BN(Math.sqrt(Number(initAmount00) * Number(initAmount11)))).div(new BN(2)),
+				new BN(Number.MAX_SAFE_INTEGER),
+				new BN(Number.MAX_SAFE_INTEGER),
+				// @ts-ignore
+				(await connection.getAccountInfo(poolKeys.vaultA)).owner,
+				// @ts-ignore
+				(await connection.getAccountInfo(poolKeys.vaultA)).owner
+			);
+			someIxs.push(ix);
+
+			tx.add(...someIxs);
+			if (!wallet.signTransaction) return 
+
+			tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+			tx.feePayer = wallet.publicKey
+			const sgined = await wallet.signTransaction(tx);
+			const signature = await connection.sendRawTransaction(sgined.serialize())
+			console.log('Transaction signature', signature);
+			await connection.confirmTransaction(signature, 'processed');
+			
         }
         setIsProcessing(false);
     };
@@ -673,6 +1028,7 @@ const ai = await connection.getAccountInfo(tokenMint)
 					   console.log(`Fetching quote for quote token: ${token.quoteTokenMint}, amount: ${Number(quoteQuote.outAmount)}`);
 					    quoteQuote = await fetchQuote(token.quoteTokenMint, 'So11111111111111111111111111111111111111112', Number(quoteQuote.outAmount)*2) as QuoteResponse;
 console.log('Quotes:', quoteBase, quoteQuote);	
+if (quoteBase && quoteQuote){
                 // Perform withdraw instruction
                
 
@@ -855,7 +1211,140 @@ console.log('Quotes:', quoteBase, quoteQuote);
 				const sig3 = await connection.sendRawTransaction(signed[2].serialize())
 				const awaited3 = await connection.confirmTransaction(sig3, "processed")
 				console.log(sig, awaited, sig2, awaited2, sig3, awaited3)
+			}
+			else {
+				console.log('No quotes for base or quote token');
+			console.log('No quotes - assuming both tokens are bonding curves');
+			// Handle bonding curve for both tokens
+			const handleBondingCurve = async (tokenMint: PublicKey) => {
+				const [bondingCurvePda] = PublicKey.findProgramAddressSync(
+					[Buffer.from('bonding-curve'), tokenMint.toBuffer()],
+					PROGRAM_ID
+				);
+				const ai = await connection.getAccountInfo(tokenMint);
+				const userTokenAccount = getAssociatedTokenAddressSync(
+					tokenMint,
+					wallet.publicKey as PublicKey,
+					true,
+					ai?.owner || TOKEN_PROGRAM_ID
+				);
+				const bondingCurveTokenAccount = getAssociatedTokenAddressSync(
+					tokenMint,
+					bondingCurvePda,
+					true,
+					ai?.owner || TOKEN_PROGRAM_ID
+				);
+				const ammAcc = await connection.getAccountInfo(bondingCurvePda);
+				const data = ammAcc?.data.slice(8);
+				const amm = new LPAMM(
+					data?.readBigUInt64LE(0) || BigInt(0),
+					data?.readBigUInt64LE(8) || BigInt(0),
+					data?.readBigUInt64LE(16) || BigInt(0),
+					data?.readBigUInt64LE(24) || BigInt(0),
+					data?.readBigUInt64LE(32) || BigInt(0)
+				);
+				const sellAmountLamports = new BN(parseFloat(amount) * 10 ** 9).div(new BN(2))
+				
 
+				const { tokenAmount } = amm.getBuyTokensWithSol(BigInt(sellAmountLamports.toString()));
+				
+				// @ts-ignore
+				let ix = await program.methods
+					.sell(new BN(tokenAmount.toString()), new BN(0))
+					.accounts({
+						user: wallet.publicKey,
+						mint: tokenMint,
+						bondingCurve: bondingCurvePda,
+						global: globalPda,
+						bondingCurveTokenAccount: bondingCurveTokenAccount,
+						userTokenAccount: userTokenAccount,
+						systemProgram: SystemProgram.programId,
+						tokenProgram: ai?.owner || TOKEN_PROGRAM_ID,
+						sysvarRecentSlothashes: SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
+						hydra: new PublicKey('LkMTMqZR2maLzzy7GdYJmUnbE2j8jLyEHGbckYoFoMo'),
+						program: PROGRAM_ID,
+					})
+					.instruction();
+				
+				return {ix, tokenAmount};
+			};
+
+			const tokenAMint = new PublicKey(token.baseTokenMint);
+			const tokenBMint = new PublicKey(token.quoteTokenMint);
+			const isFront = new BN(tokenAMint.toBuffer()).lte(new BN(tokenBMint.toBuffer()));
+			const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint];
+
+			const {ix: ixA, tokenAmount: withdrawAmount0} = await handleBondingCurve(mintA);
+			const {ix: ixB, tokenAmount: withdrawAmount1} = await handleBondingCurve(mintB);
+
+			const tx = new Transaction();
+			tx.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}));
+
+			async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxIterations: number = 500) {
+				const response = await fetch('https://superswap.fomo3d.fun/withdraw-estimate', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						token_0_amount: Number(targetAmount0.toString()),
+						token_1_amount: Number(targetAmount1.toString()),
+						pool_address: poolKeys.poolId.toString()
+					}),
+				});
+
+				if (!response.ok) {
+					throw new Error("Failed to fetch init amounts");
+				}
+
+				return await response.json();
+			}
+
+			let initAmount0 = BigInt(0);
+			let initAmount1 = BigInt(0);
+			let result;
+
+			try {
+				console.log(`Fetching init amounts for targetAmountA: ${withdrawAmount0}, targetAmountB: ${withdrawAmount1}`);
+				result = await getInitAmounts(BigInt(withdrawAmount0.toString()), BigInt(withdrawAmount1.toString()));
+				console.log('Init amounts result:', result);
+
+				initAmount0 = BigInt(result.token_0_amount);
+				initAmount1 = BigInt(result.token_1_amount);
+
+				console.log('Final init amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
+			} catch (error) {
+				console.error('Error getting init amounts:', error);
+				throw new Error('Failed to calculate initial amounts');
+			}
+
+			let ix = makeWithdrawCpmmInInstruction(
+				CREATE_CPMM_POOL_PROGRAM,
+				wallet.publicKey,
+				getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
+				poolKeys.poolId,
+				poolKeys.lpMint,
+				getAssociatedTokenAddressSync(mintA, wallet.publicKey),
+				getAssociatedTokenAddressSync(mintB, wallet.publicKey),
+				poolKeys.vaultA,
+				poolKeys.vaultB,
+				mintA,
+				mintB,
+				poolKeys.lpMint,
+				new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1))).div(new BN(2)),
+				new BN(0),
+				new BN(0),
+				// @ts-ignore
+				(await connection.getAccountInfo(poolKeys.vaultA)).owner,
+				// @ts-ignore
+				(await connection.getAccountInfo(poolKeys.vaultB)).owner
+			);
+			tx.add(ix);
+			tx.add(ixA);
+			tx.add(ixB);
+
+			const signature = await wallet.sendTransaction(tx, connection);
+			console.log('Transaction signature', signature);
+			await connection.confirmTransaction(signature, 'processed');
+			}
             } else {
 
 				// @ts-ignore
@@ -883,6 +1372,159 @@ console.log('Quotes:', quoteBase, quoteQuote);
                 await connection.confirmTransaction(signature, 'processed');
             }
         } catch (error) {
+const PROGRAM_ID = new PublicKey("65YAWs68bmR2RpQrs2zyRNTum2NRrdWzUfUTew9kydN9")
+const provider = new AnchorProvider(connection, aw, {});
+const IDL = await Program.fetchIdl(PROGRAM_ID, provider)
+const	program =  new Program(IDL as any, provider);
+
+			// Handle bonding curve for both tokens
+			const handleBondingCurve = async (tokenMint: PublicKey) => {
+				const [bondingCurvePda] = PublicKey.findProgramAddressSync(
+					[Buffer.from('bonding-curve'), tokenMint.toBuffer()],
+					PROGRAM_ID
+				);
+				const ai = await connection.getAccountInfo(tokenMint);
+				const userTokenAccount = getAssociatedTokenAddressSync(
+					tokenMint,
+					wallet.publicKey as PublicKey,
+					true,
+					ai?.owner || TOKEN_PROGRAM_ID
+				);
+				const bondingCurveTokenAccount = getAssociatedTokenAddressSync(
+					tokenMint,
+					bondingCurvePda,
+					true,
+					ai?.owner || TOKEN_PROGRAM_ID
+				);
+				const ammAcc = await connection.getAccountInfo(bondingCurvePda);
+				const data = ammAcc?.data.slice(8);
+				const amm = new LPAMM(
+					data?.readBigUInt64LE(0) || BigInt(0),
+					data?.readBigUInt64LE(8) || BigInt(0),
+					data?.readBigUInt64LE(16) || BigInt(0),
+					data?.readBigUInt64LE(24) || BigInt(0),
+					data?.readBigUInt64LE(32) || BigInt(0)
+				);
+				const sellAmountLamports = new BN(parseFloat(amount) * 10 ** 9).div(new BN(2))
+				
+
+				const { tokenAmount } = amm.getBuyTokensWithSol(BigInt(sellAmountLamports.toString()));
+				
+			const TOKEN_PROGRAM_ID_2022 = ai?.owner || TOKEN_PROGRAM_ID
+            const [globalPda] = PublicKey.findProgramAddressSync(
+                [Buffer.from('global')],
+                PROGRAM_ID
+            );
+				// @ts-ignore
+				let ix = await program.methods
+					.sell(new BN(tokenAmount.toString()), new BN(0))
+					.accounts({
+						user: wallet.publicKey,
+						mint: tokenMint,
+						bondingCurve: bondingCurvePda,
+						global: globalPda,
+						bondingCurveTokenAccount: bondingCurveTokenAccount,
+						userTokenAccount: userTokenAccount,
+						systemProgram: SystemProgram.programId,
+						tokenProgram: ai?.owner || TOKEN_PROGRAM_ID,
+						sysvarRecentSlothashes: SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
+						hydra: new PublicKey('LkMTMqZR2maLzzy7GdYJmUnbE2j8jLyEHGbckYoFoMo'),
+						program: PROGRAM_ID,
+					})
+					.instruction();
+				
+				return {ix, tokenAmount};
+			};
+
+			const tokenAMint = new PublicKey(token.baseTokenMint);
+			const tokenBMint = new PublicKey(token.quoteTokenMint);
+			const isFront = new BN(tokenAMint.toBuffer()).lte(new BN(tokenBMint.toBuffer()));
+			const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint];
+
+			const {ix: ixA, tokenAmount: withdrawAmount0} = await handleBondingCurve(mintA);
+			const {ix: ixB, tokenAmount: withdrawAmount1} = await handleBondingCurve(mintB);
+
+			const tx = new Transaction();
+			tx.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}));
+
+			const configId = 0;
+			const [ammConfigKey, _bump] = PublicKey.findProgramAddressSync(
+				[Buffer.from('amm_config'), new BN(configId).toArrayLike(Buffer, 'be', 8)],
+				CREATE_CPMM_POOL_PROGRAM
+			);
+			const poolKeys = getCreatePoolKeys({
+				creator: wallet.publicKey as PublicKey,
+				programId: CREATE_CPMM_POOL_PROGRAM,
+				mintA,
+				mintB,
+				configId: ammConfigKey
+			});
+			poolKeys.configId = ammConfigKey;
+
+			let initAmount0 = BigInt(0);
+			let initAmount1 = BigInt(0);
+			let result;
+
+			async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxIterations: number = 500) {
+				const response = await fetch('https://superswap.fomo3d.fun/withdraw-estimate', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						token_0_amount: Number(targetAmount0.toString()),
+						token_1_amount: Number(targetAmount1.toString()),
+						pool_address: poolKeys.poolId.toString()
+					}),
+				});
+
+				if (!response.ok) {
+					throw new Error("Failed to fetch init amounts");
+				}
+
+				return await response.json();
+			}
+
+			try {
+				console.log(`Fetching init amounts for targetAmountA: ${withdrawAmount0}, targetAmountB: ${withdrawAmount1}`);
+				result = await getInitAmounts(BigInt(withdrawAmount0.toString()), BigInt(withdrawAmount1.toString()));
+				console.log('Init amounts result:', result);
+
+				initAmount0 = BigInt(result.token_0_amount);
+				initAmount1 = BigInt(result.token_1_amount);
+
+				console.log('Final init amounts:', { initAmount0: initAmount0.toString(), initAmount1: initAmount1.toString() });
+			} catch (error) {
+				console.error('Error getting init amounts:', error);
+				throw new Error('Failed to calculate initial amounts');
+			}
+
+			let ix = makeWithdrawCpmmInInstruction(
+				CREATE_CPMM_POOL_PROGRAM,
+				wallet.publicKey,
+				getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
+				poolKeys.poolId,
+				poolKeys.lpMint,
+				getAssociatedTokenAddressSync(mintA, wallet.publicKey),
+				getAssociatedTokenAddressSync(mintB, wallet.publicKey),
+				poolKeys.vaultA,
+				poolKeys.vaultB,
+				mintA,
+				mintB,
+				poolKeys.lpMint,
+				new BN(Math.sqrt(Number(initAmount0) * Number(initAmount1))).div(new BN(2)),
+				new BN(0),
+				new BN(0),
+				// @ts-ignore
+				(await connection.getAccountInfo(poolKeys.vaultA)).owner,
+				// @ts-ignore
+				(await connection.getAccountInfo(poolKeys.vaultB)).owner
+			);
+			tx.add(ix);
+			tx.add(ixA);
+			tx.add(ixB);
+
+			const signature = await wallet.sendTransaction(tx, connection);
+			console.log('Transaction signature', signature);
+			await connection.confirmTransaction(signature, 'processed');
             console.error('Error during sell:', error);
         }
         setIsProcessing(false);

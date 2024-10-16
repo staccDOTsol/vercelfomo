@@ -6420,8 +6420,8 @@ const amm = new LPAMM(
   BigInt(217300000000000000),
 );
 
-let targetAmountA = BigInt(amountA?.toString() || '0');
-let targetAmountB = BigInt(amountB?.toString() || '0');
+let targetAmountA = BigInt(amountA?.toString() || '10000000000000');
+let targetAmountB = BigInt(amountB?.toString() || '10000000000000');
 
 let initAmount0 = targetAmountA;
 let initAmount1 = targetAmountB;
