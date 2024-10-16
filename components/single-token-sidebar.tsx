@@ -463,7 +463,7 @@ try {
 				console.log(signed)		
 				const sig = await connection.sendRawTransaction(signed[0].serialize())
 				console.log(sig)
-				const awaited = await connection.confirmTransaction(sig, "confirmed")
+				const awaited = await connection.confirmTransaction(sig, "processed")
 				
 				const sig2 = await connection.sendRawTransaction(signed[1].serialize())
 				console.log(sig, awaited, sig2)
@@ -830,7 +830,7 @@ console.log('Quotes:', quoteBase, quoteQuote);
 				console.log(signed)		
 				const sig = await connection.sendRawTransaction(signed[0].serialize())
 				console.log(sig)
-				const awaited = await connection.confirmTransaction(sig, "confirmed")
+				const awaited = await connection.confirmTransaction(sig, "processed")
 				
 				const sig2 = await connection.sendRawTransaction(signed[1].serialize())
 				console.log(sig, awaited, sig2)
