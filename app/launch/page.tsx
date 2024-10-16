@@ -6032,7 +6032,7 @@ const [error, setError] = useState<string | null>(null);
 			outputMint: '', // This will be set to the newly created token's address later
 			amount: values.initialBuy || '1', // Use initialBuy if provided, otherwise default to '1'
 		}));
-		const tokenIMage = values.icon
+		const tokenImage = values.icon
 		// Additional form values that might be useful
 		const website = values.website;
 		const twitter = values.twitter;
