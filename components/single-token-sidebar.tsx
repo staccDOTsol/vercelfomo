@@ -450,13 +450,14 @@ try {
 				};
 
 				const ft = await processSwapResult(swapResultA, swapResultB, someIxs);
-				if (!wallet.signAllTransactions) return 
+				if (!wallet.signTransaction) return 
 				// Update tokenAAmount and tokenBAmount with the expected output amounts
 				const sim = await connection.simulateTransaction(ft)
 				console.log(sim)
-
-                const signed = await provider.sendAndConfirm(ft)
-				console.log(signed)
+				const signed = await wallet.signTransaction(ft)
+				console.log(signed)		
+				const sig = await connection.sendRawTransaction(signed.serialize())
+				console.log(sig)
 			}
 			else {
 
@@ -806,11 +807,13 @@ console.log('Quotes:', quoteBase, quoteQuote);
                 };
 
                 const transaction = await processSwapResult(swapResultBase, swapResultQuote, someIxs);
-                if (!wallet.signAllTransactions) return;
+                if (!wallet.signTransaction) return;
 				const sim = await connection.simulateTransaction(transaction)
 				console.log(sim)
-                const signed = await provider.sendAndConfirm(transaction)
-				console.log(signed)
+				const signed = await wallet.signTransaction(transaction)
+				console.log(signed)		
+				const sig = await connection.sendRawTransaction(signed.serialize())
+				console.log(sig)
 
             } else {
 
