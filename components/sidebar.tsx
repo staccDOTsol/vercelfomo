@@ -30,6 +30,8 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
         return "new-pairs"
       case /^\/portfolio(\/.*)?$/.test(pathName):
         return "portfolio"
+      case /^\/swap(\/.*)?$/.test(pathName):
+        return "swap"
       case /^\/gainers-and-losers(\/.*)?$/.test(pathName):
         return "gainers-and-losers"
 			default:

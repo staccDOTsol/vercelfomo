@@ -21,6 +21,12 @@ export const sidebarItems: SidebarItem[] = [
     action: "alertModal"
 	},
 	{
+		key: "swap",
+		href: "/swap",
+		icon: "ion:swap-vertical-sharp",
+		title: "Swap",
+	},
+	{
 		key: "multicharts",
 		href: "/multi-chart",
 		icon: "solar:code-scan-bold",

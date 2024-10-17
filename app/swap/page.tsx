@@ -49,7 +49,7 @@ export default function Swap() {
 		<div className="w-full h-full flex items-center justify-center">
 			<Card className="w-full max-w-[450px] pb-3 bg-neutral-950 shadow-none">
 				<CardHeader className="flex justify-center">
-					<h1 className="text-5xl font-bold text-center pt-2">SuperSwap</h1>
+					<h1 className="text-5xl font-bold text-center pt-4">SuperSwap</h1>
 				</CardHeader>
 				<CardBody className="pb-0">
           <div className="flex flex-col gap-1.5 items-center px-2">
@@ -72,7 +72,7 @@ export default function Swap() {
                       ],
                       input: [
                         "!bg-transparent",
-                        "text-[30px]", 
+                        "text-[25px]", 
                         "font-bold"
                       ],
                       base: "-mt-2"
@@ -94,7 +94,7 @@ export default function Swap() {
                         <div key={item.key} className="flex items-center gap-2">
                           {item.data?.image && <Image src={item.data?.image} alt={item.data?.name} unoptimized className="w-5 h-5" width={20} height={20} />}
                           <div className="flex flex-col">
-                            <span className="text-xl">{item.data?.name}</span>
+                            <span className="text-md">{item.data?.name}</span>
                           </div>
                         </div>
                       ));
@@ -105,7 +105,7 @@ export default function Swap() {
                         <div className="flex gap-2 items-center">
                           <Image alt={coin.name} className="flex-shrink-0 w-5 h-5" src={coin.image} width={20} height={20} unoptimized />
                           <div className="flex flex-col">
-                            <span className="text-xl">{coin.name}</span>
+                            <span className="text-md">{coin.name}</span>
                           </div>
                         </div>
                       </SelectItem>
@@ -139,7 +139,7 @@ export default function Swap() {
                       ],
                       input: [
                         "!bg-transparent",
-                        "text-[30px]", 
+                        "text-[25px]", 
                         "font-bold"
                       ],
                       base: "-mt-2"
@@ -161,7 +161,7 @@ export default function Swap() {
                         <div key={item.key} className="flex items-center gap-2">
                           {item.data?.image && <Image src={item.data?.image} alt={item.data?.name} unoptimized className="w-5 h-5" width={20} height={20} />}
                           <div className="flex flex-col">
-                            <span className="text-xl">{item.data?.name}</span>
+                            <span className="text-md">{item.data?.name}</span>
                           </div>
                         </div>
                       ));
@@ -172,7 +172,7 @@ export default function Swap() {
                         <div className="flex gap-2 items-center">
                           <Image alt={coin.name} className="flex-shrink-0 w-5 h-5" src={coin.image} width={20} height={20} unoptimized />
                           <div className="flex flex-col">
-                            <span className="text-xl">{coin.name}</span>
+                            <span className="text-md">{coin.name}</span>
                           </div>
                         </div>
                       </SelectItem>
