@@ -28,7 +28,7 @@ export default function TopMenu({ toggleSidebar }: { toggleSidebar: () => void }
             Portfolio
           </Button>
           <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none" onPress={() => router.push("/swap")} aria-label="Swap">
-            <Icon icon="tabler:trending-up" />
+            <Icon icon="ion:swap-vertical-sharp" />
             Swap
           </Button>
         </div>
