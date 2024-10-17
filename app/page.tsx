@@ -67,7 +67,7 @@ export default function Home() {
                     console.log(coin.mint.address);
                     router.push(`/token/${coin.mint.address}`);
                   }}>
-                  <CardBody className="flex flex-col gap-2 pt-6 md:pt-0">
+                  <CardBody className="flex flex-col gap-2 pt-6 md:pt-3">
                     <div className="flex items-center gap-1 absolute top-2 right-2">
                       <Link href={coin.twitter} target="_blank" className="text-white/90">
                         <Icon icon="arcticons:x-twitter" />
