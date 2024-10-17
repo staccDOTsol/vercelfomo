@@ -6856,7 +6856,11 @@ const getany = (token: string): Token => {
 					<Field
 						name="description"
 						validators={{
-							onSubmit: ({ value }) => (!value ? "Description is required" : undefined),
+							onSubmit: ({ value }) => {
+								if (!value) return "Description is required";
+								if (value.length > 1000) return "Description must be 1000 characters or less";
+								return undefined;
+							},
 						}}
 						children={({ state, handleChange, handleBlur }) => (
 							<Textarea
@@ -6866,6 +6870,7 @@ const getany = (token: string): Token => {
 								defaultValue={state.value}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
 								size="lg"
+                description={`${state.value.length} / 1000`}
                 errorMessage={state.meta.errors.join(",")}
 								isInvalid={state.meta.errors.length > 0}
 								onBlur={handleBlur}

@@ -30,6 +30,8 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
         return "new-pairs"
       case /^\/portfolio(\/.*)?$/.test(pathName):
         return "portfolio"
+      case /^\/swap(\/.*)?$/.test(pathName):
+        return "swap"
       case /^\/gainers-and-losers(\/.*)?$/.test(pathName):
         return "gainers-and-losers"
 			default:
@@ -55,7 +57,7 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
   const modalContext = useContext(ModalContext);
 
 	return (
-		<div className="flex flex-col gap-2 px-2 z-50">
+		<div className="flex flex-col px-2 z-50">
 			{items.map((item: SidebarItem) => (
 				<Link
 					key={item.key}
@@ -72,7 +74,7 @@ export default function Sidebar({ isSidebarOpen, items, toggleSidebar }: { isSid
           }}
 				>
 					<Icon icon={item.icon} width={20} />
-					<span className="pt-1">{item.title}</span>
+					<span className="text-sm py-2">{item.title}</span>
 				</Link>
 			))}
 		</div>

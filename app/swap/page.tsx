@@ -38,6 +38,7 @@ export default function Component() {
   const [customOutputToken, setCustomOutputToken] = useState<TokenInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [filteredInputTokens, setFilteredInputTokens] = useState<TokenInfo[]>([])
+  const [filteredOutputTokens, setFilteredOutputTokens] = useState<TokenInfo[]>([])
 
   const endpoint = "https://rpc.ironforge.network/mainnet?apiKey=01HRZ9G6Z2A19FY8PR4RF4J4PW"
   const connection = useMemo(() => new Connection(endpoint), [])
@@ -267,8 +268,6 @@ export default function Component() {
     setFilteredInputTokens(tokens.slice(0, 10));
     setIsInputSelectOpen(true);
   };
-  const [filteredOutputTokens, setFilteredOutputTokens] = useState<TokenInfo[]>([])
-
 
   const handleCustomTokenInput = async (searchValue: string, isInput: boolean) => {
     if (searchValue.length === 44 || searchValue.length === 32) {

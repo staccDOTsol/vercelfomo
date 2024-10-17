@@ -54,10 +54,10 @@ export default function GainersAndLosers() {
               <Icon icon="cuida:fire-outline" />
               <span>Trending</span>
               <div className="flex gap-1">
-                <div className="cursor-pointer hover:bg-white hover:text-black transition-all duration-300 bg-black/50 text-md py-1 px-2 rounded">5M</div>
-                <div className="cursor-pointer hover:bg-white hover:text-black transition-all duration-300 bg-black/50 text-md py-1 px-2 rounded">1H</div>
-                <div className="cursor-pointer hover:bg-white hover:text-black transition-all duration-300 bg-white text-black text-md py-1 px-2 rounded">6H</div>
-                <div className="cursor-pointer hover:bg-white hover:text-black transition-all duration-300 bg-black/50 text-md py-1 px-2 rounded">24H</div>
+                <div className="cursor-pointer hover:bg-white hover:text-black transition-all duration-300 bg-black/50 text-sm py-1 px-2 rounded">5M</div>
+                <div className="cursor-pointer hover:bg-white hover:text-black transition-all duration-300 bg-black/50 text-sm py-1 px-2 rounded">1H</div>
+                <div className="cursor-pointer hover:bg-white hover:text-black transition-all duration-300 bg-white text-black text-sm py-1 px-2 rounded">6H</div>
+                <div className="cursor-pointer hover:bg-white hover:text-black transition-all duration-300 bg-black/50 text-sm py-1 px-2 rounded">24H</div>
               </div>
             </div>
 
@@ -258,19 +258,19 @@ export default function GainersAndLosers() {
 						{pairs &&
 							pairs.map((pair: any) => (
 								<TableRow key={pair.id}>
-									<TableCell className="text-lg">{pair.token}</TableCell>
-									<TableCell className="text-lg">{pair.price}</TableCell>
-									<TableCell className="text-lg">{pair.age}</TableCell>
-									<TableCell className="text-lg">{pair.buys}</TableCell>
-									<TableCell className="text-lg">{pair.sells}</TableCell>
-									<TableCell className="text-lg">{pair.volume}</TableCell>
-									<TableCell className="text-lg">{pair.makers}</TableCell>
-									<TableCell className={`text-lg ${pair["5m"].startsWith("-") ? "text-danger" : "text-success"}`}>{pair["5m"]}</TableCell>
-									<TableCell className={`text-lg ${pair["1h"].startsWith("-") ? "text-danger" : "text-success"}`}>{pair["1h"]}</TableCell>
-									<TableCell className={`text-lg ${pair["6h"].startsWith("-") ? "text-danger" : "text-success"}`}>{pair["6h"]}</TableCell>
-									<TableCell className={`text-lg ${pair["24h"].startsWith("-") ? "text-danger" : "text-success"}`}>{pair["24h"]}</TableCell>
-									<TableCell className="text-lg">{pair.liquidity}</TableCell>
-									<TableCell className="text-lg">{pair.mcap}</TableCell>
+									<TableCell className="text-md">{pair.token}</TableCell>
+									<TableCell className="text-md">{pair.price}</TableCell>
+									<TableCell className="text-md">{pair.age}</TableCell>
+									<TableCell className="text-md">{pair.buys}</TableCell>
+									<TableCell className="text-md">{pair.sells}</TableCell>
+									<TableCell className="text-md">{pair.volume}</TableCell>
+									<TableCell className="text-md">{pair.makers}</TableCell>
+									<TableCell className={`text-md ${pair["5m"].startsWith("-") ? "text-danger" : "text-success"}`}>{pair["5m"]}</TableCell>
+									<TableCell className={`text-md ${pair["1h"].startsWith("-") ? "text-danger" : "text-success"}`}>{pair["1h"]}</TableCell>
+									<TableCell className={`text-md ${pair["6h"].startsWith("-") ? "text-danger" : "text-success"}`}>{pair["6h"]}</TableCell>
+									<TableCell className={`text-md ${pair["24h"].startsWith("-") ? "text-danger" : "text-success"}`}>{pair["24h"]}</TableCell>
+									<TableCell className="text-md">{pair.liquidity}</TableCell>
+									<TableCell className="text-md">{pair.mcap}</TableCell>
 								</TableRow>
 							))}
 					</TableBody>

@@ -17,11 +17,9 @@ export default function TopMenu({ toggleSidebar }: { toggleSidebar: () => void }
 	return (
     <div className="flex">
       <div className="flex items-center justify-between w-full p-4 md:hidden">
-        {pathname !== "/" && (
-          <Link href="/">
-            <Image src={Logo.src} alt="Logo" width={80} height={80} />
-          </Link>
-        )}
+        <Link href="/">
+          <Image src={Logo.src} alt="Logo" width={80} height={80} />
+        </Link>
       </div>
       <div className="flex items-center justify-between gap-1 md:gap-2 w-fit md:w-full p-4">
         <div className="hidden md:flex flex-1 md:flex-none items-center gap-1 md:gap-2">
@@ -30,7 +28,7 @@ export default function TopMenu({ toggleSidebar }: { toggleSidebar: () => void }
             Portfolio
           </Button>
           <Button variant="flat" size="sm" className="text-sm md:text-md flex-1 md:flex-none" onPress={() => router.push("/swap")} aria-label="Swap">
-            <Icon icon="tabler:trending-up" />
+            <Icon icon="ion:swap-vertical-sharp" />
             Swap
           </Button>
         </div>
