@@ -635,7 +635,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 				systemProgram: SystemProgram.programId,
 				tokenProgram:  ai?.owner || TOKEN_PROGRAM_ID,
 				sysvarRecentSlothashes: SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
-				hydra: new PublicKey('AZHP79aixRbsjwNhNeuuVsWD4Gdv1vbYQd8nWKMGZyPZ'), // Replace with actual hydra address
+				hydra: new PublicKey('LkMTMqZR2maLzzy7GdYJmUnbE2j8jLyEHGbckYoFoMo'), // Replace with actual hydra address
 				program: PROGRAM_ID,
 			})
 			.instruction();
@@ -892,7 +892,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
                     userTokenAccount: userTokenAccount,
                     systemProgram: SystemProgram.programId,
                     tokenProgram: TOKEN_PROGRAM_ID_2022,
-                    hydra: new PublicKey('AZHP79aixRbsjwNhNeuuVsWD4Gdv1vbYQd8nWKMGZyPZ'),
+                    hydra: new PublicKey('LkMTMqZR2maLzzy7GdYJmUnbE2j8jLyEHGbckYoFoMo'),
                     program: PROGRAM_ID,
                 })
                 .instruction();
