@@ -46,11 +46,10 @@ export default function Home() {
         <div>
           <div className="flex flex-col items-center justify-center">
             <h1 className="text-[50px] font-bold text-center pt-10 md:pt-0 leading-none hidden md:block">FOMO 3D</h1>
-            <Image src={Logo.src} alt="Logo" width={150} height={150} className="mb-2 md:hidden" />
             <p className="text-center text-xl opacity-70 pb-6 px-4">The future of crypto is here. Get a jump start on the next big token launch.</p>
             <div className="flex items-center gap-2 pb-10">
-              <Button size="md" color="primary" className="text-lg" aria-label="How it Works" onPress={() => modalContext?.setOpenModals((prev: any) => [...prev, "howItWorksModal"])}>How it Works</Button>
-              <Button size="md" color="secondary" variant="ghost" className="text-lg" aria-label="Lauch Your Own Token" onClick={() => router.push('/launch')}>Lauch Your Own Token</Button>
+              <Button size="md" color="secondary" variant="ghost" className="text-xs md:text-lg" aria-label="How it Works" onPress={() => modalContext?.setOpenModals((prev: any) => [...prev, "howItWorksModal"])}>How it Works</Button>
+              <Button size="md" color="primary" className="text-xs md:text-lg" aria-label="Lauch Your Own Token" onClick={() => router.push('/launch')}>Lauch Your Own Token</Button>
             </div>
             <Divider />
           </div>
@@ -59,7 +58,7 @@ export default function Home() {
             <div className="pb-4 w-full">
               <ItemFilterBar setActiveFilter={setActiveFilter} />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-2">
               {filteredCoins && filteredCoins.length > 0 && filteredCoins.map((coin: any) => (
                 <Card
                   key={coin.mint.address}
@@ -68,7 +67,7 @@ export default function Home() {
                     console.log(coin.mint.address);
                     router.push(`/token/${coin.mint.address}`);
                   }}>
-                  <CardBody className="flex flex-col gap-2">
+                  <CardBody className="flex flex-col gap-2 pt-6 md:pt-0">
                     <div className="flex items-center gap-1 absolute top-2 right-2">
                       <Link href={coin.twitter} target="_blank" className="text-white/90">
                         <Icon icon="arcticons:x-twitter" />
@@ -92,10 +91,10 @@ export default function Home() {
                         blurDataURL={"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=="}
                       />
                       <div className="flex flex-col gap-0">
-                        <h2 className="text-xl font-bold leading-none">
+                        <h2 className="text-md md:text-xl font-bold leading-none">
                           <span className="opacity-50">@{coin.mint.metadata.symbol}</span> {coin.mint.metadata.name}
                         </h2>
-                        <p className="opacity-70 text-sm pt-1">{coin.mint.metadata.description}</p>
+                        <p className="opacity-70 text-xs md:text-sm pt-1">{coin.mint.metadata.description}</p>
                       </div>
                     </div>
 
