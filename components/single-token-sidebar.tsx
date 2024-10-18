@@ -209,7 +209,7 @@ console.log(token)
 			if (!token.isBondingCurve) {
 				const tokenAMint = new PublicKey(token.baseTokenMint);
 				const tokenBMint = new PublicKey(token.quoteTokenMint);
-				const isFront = new BN(tokenAMint.toBuffer()).lte(new BN(tokenBMint.toBuffer()));
+				const isFront = true;
 
 				const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint];
 				const aa = new BN(amountLamports.toString());
@@ -297,6 +297,7 @@ try {
 					const jupiterApi2 = createJupiterApiClient()
 					 swapResultA = await jupiterApi2.swapInstructionsPost({
 						swapRequest: {
+							
 							userPublicKey: wallet.publicKey.toBase58(),
 							quoteResponse: quoteA,
 							wrapAndUnwrapSol: true
@@ -307,6 +308,7 @@ try {
 				try { 
 				 swapResultB = await jupiterApi.swapInstructionsPost({
 					swapRequest: {
+						
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
 						wrapAndUnwrapSol: true
@@ -317,6 +319,7 @@ try {
 				const jupiterApi2 = createJupiterApiClient()
 				 swapResultB = await jupiterApi2.swapInstructionsPost({
 					swapRequest: {
+						
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
 						wrapAndUnwrapSol: true
@@ -360,7 +363,10 @@ try {
 				const someIxs: TransactionInstruction[] = [];
 				if (!anai) {
 					someIxs.push(createAssociatedTokenAccountInstruction(wallet.publicKey, getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey), wallet.publicKey, poolKeys.lpMint));
-				}
+				}	
+
+				const mintAiA = await connection.getAccountInfo(mintA);
+				const mintBiB = await connection.getAccountInfo(mintB);
 
 				let ix = makeDepositCpmmInInstruction(
 					CREATE_CPMM_POOL_PROGRAM,
@@ -368,8 +374,8 @@ try {
 					getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
 					poolKeys.poolId,
 					poolKeys.lpMint,
-					getAssociatedTokenAddressSync(mintA, wallet.publicKey),
-					getAssociatedTokenAddressSync(mintB, wallet.publicKey),
+					getAssociatedTokenAddressSync(mintA, wallet.publicKey, true, mintAiA?.owner || TOKEN_PROGRAM_ID),
+					getAssociatedTokenAddressSync(mintB, wallet.publicKey, true, mintBiB?.owner || TOKEN_PROGRAM_ID),
 					poolKeys.vaultA,
 					poolKeys.vaultB,
 					mintA,
@@ -514,7 +520,7 @@ try {
 
 			const tokenAMint = new PublicKey(token.baseTokenMint);
 			const tokenBMint = new PublicKey(token.quoteTokenMint);
-			const isFront = new BN(tokenAMint.toBuffer()).lte(new BN(tokenBMint.toBuffer()));
+			const isFront = true;
 			const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint];
 
 			const {ix: ixA, tokenAmount: initAmount0} = await handleBondingCurve(mintA);
@@ -590,14 +596,18 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 				console.error('Error getting init amounts:', error);
 				throw new Error('Failed to calculate initial amounts');
 			}
+
+			const mintAiA = await connection.getAccountInfo(mintA);
+			const mintBiB = await connection.getAccountInfo(mintB);
+
 			let ix = makeDepositCpmmInInstruction(
 				CREATE_CPMM_POOL_PROGRAM,
 				wallet.publicKey,
 				getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
 				poolKeys.poolId,
 				poolKeys.lpMint,
-				getAssociatedTokenAddressSync(mintA, wallet.publicKey),
-				getAssociatedTokenAddressSync(mintB, wallet.publicKey),
+				getAssociatedTokenAddressSync(mintA, wallet.publicKey, true, mintAiA?.owner || TOKEN_PROGRAM_ID),
+				getAssociatedTokenAddressSync(mintB, wallet.publicKey, true, mintBiB?.owner || TOKEN_PROGRAM_ID),
 				poolKeys.vaultA,
 				poolKeys.vaultB,
 				mintA,
@@ -708,7 +718,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
             if (!token.isBondingCurve) {
                 const tokenAMint = new PublicKey(token.baseTokenMint);
                 const tokenBMint = new PublicKey(token.quoteTokenMint);
-                const isFront = new BN(tokenAMint.toBuffer()).lte(new BN(tokenBMint.toBuffer()));
+                const isFront = true;
                 
                 const [mintA, mintB] = isFront ? [tokenAMint, tokenBMint] : [tokenBMint, tokenAMint];
                 const aa = new BN(sellAmountLamports.toString());
