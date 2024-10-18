@@ -131,7 +131,7 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi.quoteGet({
 			inputMint: inputMint,
 			outputMint: outputMint,
-			maxAccounts: 12,
+			maxaccounts: 18,
 			computeAutoSlippage: true,
 			amount: Math.floor(amount/2),
 			slippageBps: 1000, // 1% slippage
@@ -142,7 +142,7 @@ export default function SingleTokenSidebar({
 		  const quote = await jupiterApi2.quoteGet({
 			  inputMint: inputMint,
 			  outputMint: outputMint,
-			  maxAccounts: 12,
+			  maxaccounts: 18,
 			  amount: Math.floor(amount/2),
 			  slippageBps: 1000, // 1% slippage
 			  computeAutoSlippage: true,
