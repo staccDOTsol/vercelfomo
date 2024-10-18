@@ -367,15 +367,32 @@ try {
 
 				const mintAiA = await connection.getAccountInfo(mintA);
 				const mintBiB = await connection.getAccountInfo(mintB);
-
+				const mintAiAata = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {mint: mintA});
+				const mintBiBata = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {mint: mintB});
+				let mostA = 0 ;
+				let mostB = 0 ;
+				let winnerA = mintAiAata.value[0];
+				let winnerB = mintBiBata.value[0];
+				mintAiAata.value.forEach((token: any) => {
+					if (token.account.data.parsed.info.tokenAmount.uiAmount > mostA) {
+						mostA = token.account.data.parsed.info.tokenAmount.uiAmount;
+						winnerA = token;
+					}
+				});
+				mintBiBata.value.forEach((token: any) => {
+					if (token.account.data.parsed.info.tokenAmount.uiAmount > mostB) {
+						mostB = token.account.data.parsed.info.tokenAmount.uiAmount;
+						winnerB = token;
+					}
+				});
 				let ix = makeDepositCpmmInInstruction(
 					CREATE_CPMM_POOL_PROGRAM,
 					wallet.publicKey,
 					getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
 					poolKeys.poolId,
 					poolKeys.lpMint,
-					getAssociatedTokenAddressSync(mintA, wallet.publicKey, true, mintAiA?.owner || TOKEN_PROGRAM_ID),
-					getAssociatedTokenAddressSync(mintB, wallet.publicKey, true, mintBiB?.owner || TOKEN_PROGRAM_ID),
+					winnerA.pubkey ,
+					winnerB.pubkey ,
 					poolKeys.vaultA,
 					poolKeys.vaultB,
 					mintA,
@@ -385,9 +402,9 @@ try {
 					new BN(Number.MAX_SAFE_INTEGER),
 					new BN(Number.MAX_SAFE_INTEGER),
 					// @ts-ignore
-					(await connection.getAccountInfo(poolKeys.vaultA)).owner,
+					mintAiA.owner,
 					// @ts-ignore
-					(await connection.getAccountInfo(poolKeys.vaultA)).owner
+					mintBiB.owner
 				);
 				someIxs.push(ix);
 				// Create separate transactions for setup instructions
@@ -617,9 +634,9 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 				new BN(Number.MAX_SAFE_INTEGER),
 				new BN(Number.MAX_SAFE_INTEGER),
 				// @ts-ignore
-				(await connection.getAccountInfo(poolKeys.vaultA)).owner,
+				mintAiA.owner,
 				// @ts-ignore
-				(await connection.getAccountInfo(poolKeys.vaultA)).owner
+				mintBiB.owner
 			);
 			someIxs.push(ix);
 
@@ -772,8 +789,10 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
                     new BN(sellAmountLamports.toString()),
                     new BN(0),
                     new BN(0),
-                    (await connection.getAccountInfo(poolKeys.vaultA))!.owner,
-                    (await connection.getAccountInfo(poolKeys.vaultB))!.owner
+					// @ts-ignore
+					mintAiA.owner,
+					// @ts-ignore
+					mintBiB.owner
                 );
 
                 // Create and send transaction
