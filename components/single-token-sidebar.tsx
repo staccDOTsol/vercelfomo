@@ -285,7 +285,7 @@ try {
 				let swapResultB;
 				try { 
 				// Perform swaps
-				 swapResultA = await jupiterApi.swapPost({
+				 swapResultA = await jupiterApi.swapInstructionsPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteA,
@@ -295,7 +295,7 @@ try {
 				});
 				} catch (error) {
 					const jupiterApi2 = createJupiterApiClient()
-					 swapResultA = await jupiterApi2.swapPost({
+					 swapResultA = await jupiterApi2.swapInstructionsPost({
 						swapRequest: {
 							userPublicKey: wallet.publicKey.toBase58(),
 							quoteResponse: quoteA,
@@ -305,7 +305,7 @@ try {
 					});
 				}
 				try { 
-				 swapResultB = await jupiterApi.swapPost({
+				 swapResultB = await jupiterApi.swapInstructionsPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
@@ -315,7 +315,7 @@ try {
 				});
 			} catch (error) {
 				const jupiterApi2 = createJupiterApiClient()
-				 swapResultB = await jupiterApi2.swapPost({
+				 swapResultB = await jupiterApi2.swapInstructionsPost({
 					swapRequest: {
 						userPublicKey: wallet.publicKey.toBase58(),
 						quoteResponse: quoteB,
@@ -402,9 +402,14 @@ try {
 						setupInstructions: setupInstructionsB,
 						cleanupInstruction: cleanupInstructionB
 					} = swapResultB;
-
-					const addressLookupTableAccounts = await getAddressLookupTableAccounts(addressLookupTableAddresses);
-					const addressLookupTableAccountsB = await getAddressLookupTableAccounts(addressLookupTableAddressesB);
+					let addressLookupTableAccounts = [];
+					let addressLookupTableAccountsB = [];
+					if (addressLookupTableAddresses && addressLookupTableAddresses.length > 0) {	
+					 addressLookupTableAccounts = await getAddressLookupTableAccounts(addressLookupTableAddresses);
+					}
+					if (addressLookupTableAddressesB && addressLookupTableAddressesB.length > 0) {
+					 addressLookupTableAccountsB = await getAddressLookupTableAccounts(addressLookupTableAddressesB);
+					}
 					const blockhash = (await connection.getLatestBlockhash()).blockhash;
 					const messageV0 = new TransactionMessage({
 						payerKey: wallet.publicKey as PublicKey,
@@ -422,8 +427,8 @@ try {
 						recentBlockhash: blockhash,
 						instructions: [
 							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
-						...setupInstructions.map(deserializeInstruction),
-						...setupInstructionsB.map(deserializeInstruction),
+						...(setupInstructions ? setupInstructions.map(deserializeInstruction) : []),
+						...(setupInstructionsB ? setupInstructionsB.map(deserializeInstruction) : []),
 						]
 					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
 					const messagev022z = new TransactionMessage({	
