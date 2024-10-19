@@ -1540,25 +1540,6 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 	const router = useRouter();
 	const [progress, setProgress] = useState(0);
 
-	useEffect(() => {
-		const fetchBalance = async () => {
-			const publicKey = new PublicKey(token.mint)
-			
-			try {
-				const balance = await connection.getBalance(publicKey);
-				const calculatedProgress = (balance / 85* 10 ** 9) ;
-				setProgress(Math.min(100, Math.max(0, calculatedProgress))); // Ensure progress is between 0 and 100
-			} catch (error) {
-				console.error("Error fetching balance:", error);
-			}
-		};
-
-		fetchBalance();
-		const intervalId = setInterval(fetchBalance, 60000); // Update every minute
-
-		return () => clearInterval(intervalId);
-	}, []);
-
     const [burnIsProcessing, setBurnIsProcessing] = useState(false);
 	const [state, setState] = useState<any>(null);
 	const [burnMemo, setBurnMemo] = useState("Burning for a good cause");
@@ -1738,9 +1719,9 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 					<Card className="bg-transparent border border-white/10 p-2">
 						<CardBody>
 							<div className="leading-none -mt-1 pb-2 text-sm">
-								Progress <span className="text-primary">{progress}%</span>
+								Progress <span className="text-primary">{token.completed}%</span>
 							</div>
-							<Progress value={progress} size="md" />
+							<Progress value={token.completed} size="md" />
 						</CardBody>
 					</Card>
 				)}
