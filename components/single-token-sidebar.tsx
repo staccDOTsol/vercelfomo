@@ -1603,7 +1603,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 
         fetchState();
 
-    }, []);
+    }, [aw, state]);
     const handleBurn = async () => {
         if (!aw || !wallet.publicKey) return;
 
