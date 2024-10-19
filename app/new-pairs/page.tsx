@@ -24,7 +24,7 @@ export default function NewPairs() {
 		if (pairs) {
 			const filtered = pairs.filter((pair: any) => {
 				const bondingCurveMatch = !showBondingCurveOnly || pair.isBondingCurve === true;
-				const gobblerMatch = !showGobblerOnly || pair.isGobbler === true;
+				const gobblerMatch = !showGobblerOnly || pair.isBondingCurve === false;
 				// Add other filter conditions here if needed
 				return bondingCurveMatch && gobblerMatch;
 			});

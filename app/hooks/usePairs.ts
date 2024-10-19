@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-export default function usePairs(isBondingCurveOnly: boolean = false) {
+export default function usePairs(isBondingCurveOnly: boolean = false, isGobblerOnly: boolean = false) {
 	const fetchPairs = async () => {
 		const response = await fetch("/api/pairs/new?count=500");
 		if (!response.ok) {
@@ -15,7 +15,7 @@ export default function usePairs(isBondingCurveOnly: boolean = false) {
 		error,
 	} = useQuery({
 			select: (data) => data.filter((pair:any) => pair.token !== 'Unknown'),
-		queryKey: ["pairs", isBondingCurveOnly],
+		queryKey: ["pairs", isBondingCurveOnly, isGobblerOnly],
 		queryFn: fetchPairs,
 		staleTime: 250000,
 	});
