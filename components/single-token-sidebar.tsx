@@ -662,7 +662,6 @@ export default function SingleTokenSidebar({
 			data?.readBigUInt64LE(24) || BigInt(0),
 			data?.readBigUInt64LE(32) || BigInt(0)
 			)
-console.log(token)
 			const { tokenAmount } = amm.getBuyTokensWithSol(BigInt(amountLamports.toString()));
 
 			if (!token.isBondingCurve) {
@@ -1552,7 +1551,6 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 
 		return () => clearInterval(intervalId);
 	}, []);
-	console.log(token)
 
     const [burnIsProcessing, setBurnIsProcessing] = useState(false);
 	const [state, setState] = useState<any>(null);
@@ -1578,10 +1576,10 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
         };
 
         fetchState();
-        const intervalId = setInterval(fetchState, 60000); // Update every minute
+        const intervalId = setInterval(fetchState, 1000); // Update every minute
 
         return () => clearInterval(intervalId);
-    }, [aw, connection]);
+    }, []);
     const handleBurn = async () => {
         if (!aw || !wallet.publicKey) return;
 
