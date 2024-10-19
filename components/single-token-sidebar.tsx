@@ -1570,6 +1570,44 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 
                 setState(state);
                 console.log(state);
+
+		const fetchCollectionSize = async () => {
+			if (!state || !state.collectionMint) return;
+
+			const url = "https://mainnet.helius-rpc.com/?api-key=0d4b4fd6-c2fc-4f55-b615-a23bab1ffc85";
+			console.log(state.collectionMint.toBase58())
+			const getAssetsByGroup = async () => {
+				try {
+					const response = await fetch(url, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							jsonrpc: '2.0',
+							id: 'my-id',
+							method: 'getAssetsByGroup',
+							params: {
+								groupKey: 'collection',
+								groupValue: state.collectionMint.toBase58(),
+								page: 0,
+								limit: 1000,
+							},
+						}),
+					});
+					const {result }= await response.json();
+					console.log(result)
+					console.log("Collection size: ", result.items.length);
+					setCollectionSize(result.items.length);
+				} catch (error) {
+					console.error("Error fetching collection size:", error);
+				}
+			};
+
+			getAssetsByGroup();
+		};
+
+		fetchCollectionSize();
             } catch (error) {
                 console.error("Error fetching state:", error);
             }
@@ -1675,6 +1713,8 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
             setBurnIsProcessing(false);
         }
     };
+
+	const [collectionSize, setCollectionSize] = useState(0);
 	return (
 		<>
 			<div className="flex justify-between items-center p-3">
@@ -1750,6 +1790,8 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 										<p className="font-bold">{(state.highestBurn.div(new BN(5000)).toNumber() / 1e9).toFixed(9)}</p>
 										<p>Current winner: {state.winner.toBase58().slice(0, 4)}...{state.winner.toBase58().slice(-4)}</p>
 										<p>Wins in {Math.floor((state.endTime.toNumber() - Date.now() / 1000))} seconds</p>
+										<p>Currently, {collectionSize} tokens are in the collection, sharing 5% devshare from fomo3d ecosystem..</p>
+										<p>Devshare per token: {(5 / collectionSize).toFixed(9)}%</p>
 										<p className="italic">"{state.winnerMemo}"</p>
 									</div>
 								)}
