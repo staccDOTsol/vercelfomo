@@ -1595,7 +1595,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 							},
 						}),
 					});
-					const {result }= await response.json();
+					const result = await response.json();
 					console.log(result)
 					console.log("Collection size: ", result.items.length);
 					setCollectionSize(result.items.length);
