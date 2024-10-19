@@ -17,13 +17,16 @@ export default function Home() {
   const [parent, enableAnimations] = useAutoAnimate()
   const router = useRouter();
   const [showBondingCurveOnly, setShowBondingCurveOnly] = useState(false);
-  const { pairs: coins, isLoading, error } = usePairs(showBondingCurveOnly);
+  const [showGobblerOnly, setShowGobblerOnly] = useState(false);
+  const { pairs: coins, isLoading, error } = usePairs(showBondingCurveOnly, showGobblerOnly);
   const [filteredCoins, setFilteredCoins] = useState<any[]>([]);
 
   useEffect(() => {
     if (coins) {
       const filtered = coins.filter((coin: any) => {
         const bondingCurveMatch = !showBondingCurveOnly || coin.isBondingCurve === true;
+        const gobblerMatch = !showGobblerOnly || coin.isBondingCurve === false;
+
         let filterMatch = true;
         
         switch (activeFilter) {
@@ -41,12 +44,12 @@ export default function Home() {
             break;
         }
         
-        return bondingCurveMatch && filterMatch;
+        return bondingCurveMatch && gobblerMatch && filterMatch;
       });
       
       setFilteredCoins(filtered);
     }
-  }, [coins, showBondingCurveOnly, activeFilter]);
+  }, [coins, showBondingCurveOnly, showGobblerOnly, activeFilter]);
     
 
 
@@ -78,6 +81,13 @@ export default function Home() {
                 <Switch
                   checked={showBondingCurveOnly}
                   onChange={(e) => setShowBondingCurveOnly(e.target.checked)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Gobbler Only</span>
+                <Switch
+                  checked={showGobblerOnly}
+                  onChange={(e) => setShowGobblerOnly(e.target.checked)}
                 />
               </div>
             </div>
