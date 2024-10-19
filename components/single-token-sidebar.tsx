@@ -1212,7 +1212,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 			let initAmount00 = BigInt(0);
 			let initAmount11 = BigInt(0);
 			try {
-				const result = await getInitAmounts(BigInt(state? state.highestBurn.div(new BN(5000)) : 1_000_000_000), BigInt(state? state.highestBurn.div(new BN(5000)) : 1_000_000));
+				const result = await getInitAmounts(BigInt(state? state.highestBurn.div(new BN(2500)) : 1_000_000_000), BigInt(state? state.highestBurn.div(new BN(2500)) : 1_000_000));
 				console.log('Init amounts result:', result);
 
 				initAmount00 = BigInt(result.token_0_amount);
@@ -1241,7 +1241,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 				baseToken,
 				quoteToken,
 				poolKeys.lpMint,
-				token.mint === "BiEydESECDhjrw2cyKbGTaeAMp84ASfgWGyaq3DJ83Uq"? state.highestBurn.div(new BN(5000)) : (new BN(Math.sqrt(Number(initAmount00) * Number(initAmount11)))).div(new BN(2)),
+				token.mint === "BiEydESECDhjrw2cyKbGTaeAMp84ASfgWGyaq3DJ83Uq"? state.highestBurn.div(new BN(2500)) : (new BN(Math.sqrt(Number(initAmount00) * Number(initAmount11)))).div(new BN(2)),
 				new BN(Number.MAX_SAFE_INTEGER),
 				new BN(Number.MAX_SAFE_INTEGER),
 				// @ts-ignore
