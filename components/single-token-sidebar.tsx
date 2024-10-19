@@ -1600,7 +1600,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 							params: {
 								groupKey: 'collection',
 								groupValue: state.collectionMint.toBase58(),
-								page: 0,
+								page: 1,
 								limit: 1000,
 							},
 						}),
