@@ -1166,8 +1166,6 @@ const ai2 = await connection.getAccountInfo(quoteToken)
 const ai = await connection.getAccountInfo(baseToken)
 const baseTokenAccount = getAssociatedTokenAddressSync(baseToken, wallet.publicKey, true, ai?.owner || TOKEN_PROGRAM_ID)
 const quoteTokenAccount = getAssociatedTokenAddressSync(quoteToken, wallet.publicKey, true, ai2?.owner || TOKEN_PROGRAM_ID)
-const baseTokenBalance = await connection.getTokenAccountBalance(baseTokenAccount)
-const quoteTokenBalance = await connection.getTokenAccountBalance(quoteTokenAccount)
 
 const configId = 0;
 const [ammConfigKey, _bump] = PublicKey.findProgramAddressSync([Buffer.from("amm_config"), new BN(configId).toArrayLike(Buffer, "be", 8)], CREATE_CPMM_POOL_PROGRAM);
