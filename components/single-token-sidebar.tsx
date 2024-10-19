@@ -586,28 +586,17 @@ export default function SingleTokenSidebar({
 }) {
 	const fetchQuote = useCallback(async (inputMint: string, outputMint: string, amount: number) => {
 		if (!inputMint || !outputMint || !amount) return null;
-		try {
-		  const quote = await jupiterApi.quoteGet({
-			inputMint: inputMint,
-			outputMint: outputMint,
-			maxAccounts: 18,
-			computeAutoSlippage: true,
-			amount: Math.floor(amount/2),
-			slippageBps: 1000, // 1% slippage
-		  });
-		  return quote;
-		} catch (error) {
+		
 		  const jupiterApi2 = createJupiterApiClient()
 		  const quote = await jupiterApi2.quoteGet({
 			  inputMint: inputMint,
 			  outputMint: outputMint,
-			  maxAccounts: 18,
+			  maxAccounts: 14,
 			  amount: Math.floor(amount/2),
 			  slippageBps: 1000, // 1% slippage
 			  computeAutoSlippage: true,
 			});	
 		  return quote;
-		}
 	  }, []);
 
 	const [solusdc, setSolusdc] = useState(150);
@@ -698,6 +687,8 @@ export default function SingleTokenSidebar({
 					mintB.toString(),
 					Number(amountLamports)
 				);
+
+				console.log(quoteA, quoteB)
 				
 				if (quoteA && quoteB) {
 				
@@ -815,42 +806,30 @@ try {
 						return acc;
 					}, []);
 				};
-				const tokenAAmount = new BN(quoteA.outAmount);
-				const tokenBAmount = new BN(quoteB.outAmount);
+				console.log('Starting deposit process');
+				console.log('LP Mint:', poolKeys.lpMint.toBase58());
+				console.log('Swap Result A:', swapResultA);
+				console.log('Swap Result B:', swapResultB);
 				const anai = await connection.getAccountInfo(getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey));
+				console.log('Associated Token Account exists:', !!anai);
 				const someIxs: TransactionInstruction[] = [];
 				if (!anai) {
+					console.log('Creating Associated Token Account');
 					someIxs.push(createAssociatedTokenAccountInstruction(wallet.publicKey, getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey), wallet.publicKey, poolKeys.lpMint));
 				}	
 
 				const mintAiA = await connection.getAccountInfo(mintA);
 				const mintBiB = await connection.getAccountInfo(mintB);
-				const mintAiAata = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {mint: mintA});
-				const mintBiBata = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {mint: mintB});
-				let mostA = 0 ;
-				let mostB = 0 ;
-				let winnerA = mintAiAata.value[0];
-				let winnerB = mintBiBata.value[0];
-				mintAiAata.value.forEach((token: any) => {
-					if (token.account.data.parsed.info.tokenAmount.uiAmount > mostA) {
-						mostA = token.account.data.parsed.info.tokenAmount.uiAmount;
-						winnerA = token;
-					}
-				});
-				mintBiBata.value.forEach((token: any) => {
-					if (token.account.data.parsed.info.tokenAmount.uiAmount > mostB) {
-						mostB = token.account.data.parsed.info.tokenAmount.uiAmount;
-						winnerB = token;
-					}
-				});
+				console.log('Mint A owner:', mintAiA?.owner.toBase58());
+				console.log('Mint B owner:', mintBiB?.owner.toBase58());
 				let ix = makeDepositCpmmInInstruction(
 					CREATE_CPMM_POOL_PROGRAM,
 					wallet.publicKey,
 					getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
 					poolKeys.poolId,
 					poolKeys.lpMint,
-					winnerA.pubkey ,
-					winnerB.pubkey ,
+					getAssociatedTokenAddressSync(mintA, wallet.publicKey, true, mintAiA?.owner || TOKEN_PROGRAM_ID),
+					getAssociatedTokenAddressSync(mintB, wallet.publicKey, true, mintBiB?.owner || TOKEN_PROGRAM_ID),
 					poolKeys.vaultA,
 					poolKeys.vaultB,
 					mintA,
@@ -864,11 +843,10 @@ try {
 					// @ts-ignore
 					mintBiB.owner
 				);
-				someIxs.push(ix);
-				// Create separate transactions for setup instructions
-			
+				console.log('Deposit instruction created');
 
 				const processSwapResult = async (swapResult: any, swapResultB: any, someIxs: any) => {
+					console.log('Processing swap results');
 					const {
 						computeBudgetInstructions,
 						swapInstruction: swapInstructionPayload,
@@ -891,7 +869,10 @@ try {
 					if (addressLookupTableAddressesB && addressLookupTableAddressesB.length > 0) {
 					 addressLookupTableAccountsB = await getAddressLookupTableAccounts(addressLookupTableAddressesB);
 					}
+					console.log('Address lookup table accounts A:', addressLookupTableAccounts.length);
+					console.log('Address lookup table accounts B:', addressLookupTableAccountsB.length);
 					const blockhash = (await connection.getLatestBlockhash()).blockhash;
+					console.log('Latest blockhash:', blockhash);
 					const messageV0 = new TransactionMessage({
 						payerKey: wallet.publicKey as PublicKey,
 						recentBlockhash: blockhash,
@@ -900,7 +881,7 @@ try {
 					
 							deserializeInstruction(swapInstructionPayload),
 							deserializeInstruction(swapInstructionPayloadB),
-							...someIxs
+							ix
 						],
 					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
 					const messagev02 = new TransactionMessage({	
@@ -908,6 +889,7 @@ try {
 						recentBlockhash: blockhash,
 						instructions: [
 							ComputeBudgetProgram.setComputeUnitPrice({microLamports: 633333}),
+							...someIxs,
 						...(setupInstructions ? setupInstructions.map(deserializeInstruction) : []),
 						...(setupInstructionsB ? setupInstructionsB.map(deserializeInstruction) : []),
 						]
@@ -921,33 +903,48 @@ try {
 								...(cleanupInstructionB ? [deserializeInstruction(cleanupInstructionB)] : []),
 						]
 					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
+					console.log('Transaction messages created');
 					return [ new VersionedTransaction(messagev02),new VersionedTransaction(messageV0), new VersionedTransaction(messagev022z)];
 				};
 				if (swapResultA && swapResultB) {
                 const transactions = await processSwapResult(swapResultA, swapResultB, someIxs);
-                if (!wallet.signAllTransactions) return;
+                if (!wallet.signAllTransactions) {
+					console.log('Wallet does not support signAllTransactions');
+					return;
+				}
 				const signed = await wallet.signAllTransactions(transactions)
-				console.log(signed)		
+				console.log('Transactions signed');		
 				const sig = await connection.sendRawTransaction(signed[0].serialize())
-				console.log(sig)
+				console.log('First transaction sent:', sig);
 				const awaited = await connection.confirmTransaction(sig, "processed")
+				console.log('First transaction confirmed:', awaited);
 				
 				const sig2 = await connection.sendRawTransaction(signed[1].serialize())
+				console.log('Second transaction sent:', sig2);
 				const awaited2 = await connection.confirmTransaction(sig2, "processed")
+				console.log('Second transaction confirmed:', awaited2);
 				const sig3 = await connection.sendRawTransaction(signed[2].serialize())
+				console.log('Third transaction sent:', sig3);
 				const awaited3 = await connection.confirmTransaction(sig3, "processed")
-				console.log(sig, awaited, sig2, awaited2, sig3, awaited3)
+				console.log('Third transaction confirmed:', awaited3);
+				console.log('All transactions completed');
 				}
 				else {
+					console.log('No swap results, processing someIxs only');
 					const someIxsTx = new Transaction()
 					someIxsTx.add(...someIxs)
-					if (!wallet.signTransaction) return 
+					if (!wallet.signTransaction) {
+						console.log('Wallet does not support signTransaction');
+						return;
+					}
 					someIxsTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
 					someIxsTx.feePayer = wallet.publicKey
-					const sgined = await wallet.signTransaction(someIxsTx)
-					const signature = await connection.sendRawTransaction(sgined.serialize())
-					console.log('Transaction signature', signature);
+					const signed = await wallet.signTransaction(someIxsTx)
+					console.log('Transaction signed');
+					const signature = await connection.sendRawTransaction(signed.serialize())
+					console.log('Transaction sent:', signature);
 					const awaited = await connection.confirmTransaction(signature, 'processed');
+					console.log('Transaction confirmed:', awaited);
 				}
 
 			}
@@ -1624,9 +1621,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
         };
 
         fetchState();
-        const intervalId = setInterval(fetchState, 1000); // Update every minute
 
-        return () => clearInterval(intervalId);
     }, []);
     const handleBurn = async () => {
         if (!aw || !wallet.publicKey) return;
