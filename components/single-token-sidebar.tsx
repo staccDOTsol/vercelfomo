@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import SidebarStats from "@/components/sidebar-stats";
 import SlippageInput from "@/components/slippage-input";
 import AmountInput from "@/components/amount-input";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { createAssociatedTokenAccountInstruction, TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { AddressLookupTableAccount, ComputeBudgetProgram, Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_RECENT_BLOCKHASHES_PUBKEY, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction} from '@solana/web3.js'
+import { AddressLookupTableAccount, ComputeBudgetProgram, Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_RECENT_BLOCKHASHES_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction} from '@solana/web3.js'
 import { BN } from "bn.js";
 import {
 	CREATE_CPMM_POOL_PROGRAM,
@@ -24,11 +24,470 @@ import {
 } from "tokengobbler";
 
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { AnchorProvider, Program } from "@coral-xyz/anchor";
+import { AnchorProvider, Idl, Program } from "@coral-xyz/anchor";
 import { useAnchorWallet, useWallet } from "@solana/wallet-adapter-react";
 import { createJupiterApiClient, QuoteResponse } from "@jup-ag/api";
 import { createAssociatedLedgerAccountInstruction } from "@raydium-io/raydium-sdk-v2";
-
+import { utf8 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
+const burnIt = {
+	"address": "HnQDbgpFbZCa3GfZ3MtZUHXVYyU2nWPVGAMYWYn3D7mo",
+	"metadata": {
+	  "name": "burnittweetit",
+	  "version": "0.1.0",
+	  "spec": "0.1.0",
+	  "description": "Created with Anchor"
+	},
+	"instructions": [
+	  {
+		"name": "burn_tokens",
+		"discriminator": [
+		  76,
+		  15,
+		  51,
+		  254,
+		  229,
+		  215,
+		  121,
+		  66
+		],
+		"accounts": [
+		  {
+			"name": "state",
+			"writable": true
+		  },
+		  {
+			"name": "token_account",
+			"writable": true
+		  },
+		  {
+			"name": "mint",
+			"writable": true,
+			"address": "BiEydESECDhjrw2cyKbGTaeAMp84ASfgWGyaq3DJ83Uq"
+		  },
+		  {
+			"name": "token_program",
+			"address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+		  },
+		  {
+			"name": "user",
+			"writable": true,
+			"signer": true
+		  },
+		  {
+			"name": "nft_mint",
+			"writable": true,
+			"pda": {
+			  "seeds": [
+				{
+				  "kind": "const",
+				  "value": [
+					110,
+					102,
+					116,
+					95,
+					109,
+					105,
+					110,
+					116
+				  ]
+				},
+				{
+				  "kind": "account",
+				  "path": "user"
+				},
+				{
+				  "kind": "account",
+				  "path": "state"
+				}
+			  ]
+			}
+		  },
+		  {
+			"name": "nft_mint_authority",
+			"pda": {
+			  "seeds": [
+				{
+				  "kind": "const",
+				  "value": [
+					110,
+					102,
+					116,
+					95,
+					109,
+					105,
+					110,
+					116,
+					95,
+					97,
+					117,
+					116,
+					104,
+					111,
+					114,
+					105,
+					116,
+					121
+				  ]
+				},
+				{
+				  "kind": "account",
+				  "path": "state"
+				}
+			  ]
+			}
+		  },
+		  {
+			"name": "nft_token_account",
+			"writable": true,
+			"pda": {
+			  "seeds": [
+				{
+				  "kind": "account",
+				  "path": "winner"
+				},
+				{
+				  "kind": "const",
+				  "value": [
+					6,
+					221,
+					246,
+					225,
+					215,
+					101,
+					161,
+					147,
+					217,
+					203,
+					225,
+					70,
+					206,
+					235,
+					121,
+					172,
+					28,
+					180,
+					133,
+					237,
+					95,
+					91,
+					55,
+					145,
+					58,
+					140,
+					245,
+					133,
+					126,
+					255,
+					0,
+					169
+				  ]
+				},
+				{
+				  "kind": "account",
+				  "path": "nft_mint"
+				}
+			  ],
+			  "program": {
+				"kind": "const",
+				"value": [
+				  140,
+				  151,
+				  37,
+				  143,
+				  78,
+				  36,
+				  137,
+				  241,
+				  187,
+				  61,
+				  16,
+				  41,
+				  20,
+				  142,
+				  13,
+				  131,
+				  11,
+				  90,
+				  19,
+				  153,
+				  218,
+				  255,
+				  16,
+				  132,
+				  4,
+				  142,
+				  123,
+				  216,
+				  219,
+				  233,
+				  248,
+				  89
+				]
+			  }
+			}
+		  },
+		  {
+			"name": "metadata",
+			"writable": true
+		  },
+		  {
+			"name": "winner"
+		  },
+		  {
+			"name": "metadata_program"
+		  },
+		  {
+			"name": "rent",
+			"address": "SysvarRent111111111111111111111111111111111"
+		  },
+		  {
+			"name": "system_program",
+			"address": "11111111111111111111111111111111"
+		  },
+		  {
+			"name": "associated_token_program",
+			"address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+		  }
+		],
+		"args": [
+		  {
+			"name": "amount",
+			"type": "u64"
+		  },
+		  {
+			"name": "memo",
+			"type": {
+			  "array": [
+				"u8",
+				128
+			  ]
+			}
+		  }
+		]
+	  },
+	  {
+		"name": "initialize",
+		"discriminator": [
+		  175,
+		  175,
+		  109,
+		  31,
+		  13,
+		  152,
+		  155,
+		  237
+		],
+		"accounts": [
+		  {
+			"name": "state",
+			"writable": true,
+			"signer": true
+		  },
+		  {
+			"name": "user",
+			"writable": true,
+			"signer": true
+		  },
+		  {
+			"name": "collection_mint",
+			"writable": true,
+			"pda": {
+			  "seeds": [
+				{
+				  "kind": "const",
+				  "value": [
+					99,
+					111,
+					108,
+					108,
+					101,
+					99,
+					116,
+					105,
+					111,
+					110,
+					95,
+					109,
+					105,
+					110,
+					116
+				  ]
+				}
+			  ]
+			}
+		  },
+		  {
+			"name": "collection_metadata",
+			"writable": true
+		  },
+		  {
+			"name": "metadata_program",
+			"address": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+		  },
+		  {
+			"name": "token_program",
+			"address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+		  },
+		  {
+			"name": "rent",
+			"address": "SysvarRent111111111111111111111111111111111"
+		  },
+		  {
+			"name": "system_program",
+			"address": "11111111111111111111111111111111"
+		  },
+		  {
+			"name": "collection_token_account",
+			"writable": true,
+			"pda": {
+			  "seeds": [
+				{
+				  "kind": "account",
+				  "path": "user"
+				},
+				{
+				  "kind": "const",
+				  "value": [
+					6,
+					221,
+					246,
+					225,
+					215,
+					101,
+					161,
+					147,
+					217,
+					203,
+					225,
+					70,
+					206,
+					235,
+					121,
+					172,
+					28,
+					180,
+					133,
+					237,
+					95,
+					91,
+					55,
+					145,
+					58,
+					140,
+					245,
+					133,
+					126,
+					255,
+					0,
+					169
+				  ]
+				},
+				{
+				  "kind": "account",
+				  "path": "collection_mint"
+				}
+			  ],
+			  "program": {
+				"kind": "const",
+				"value": [
+				  140,
+				  151,
+				  37,
+				  143,
+				  78,
+				  36,
+				  137,
+				  241,
+				  187,
+				  61,
+				  16,
+				  41,
+				  20,
+				  142,
+				  13,
+				  131,
+				  11,
+				  90,
+				  19,
+				  153,
+				  218,
+				  255,
+				  16,
+				  132,
+				  4,
+				  142,
+				  123,
+				  216,
+				  219,
+				  233,
+				  248,
+				  89
+				]
+			  }
+			}
+		  },
+		  {
+			"name": "associated_token_program",
+			"address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+		  }
+		],
+		"args": []
+	  }
+	],
+	"accounts": [
+	  {
+		"name": "State",
+		"discriminator": [
+		  216,
+		  146,
+		  107,
+		  94,
+		  104,
+		  75,
+		  182,
+		  177
+		]
+	  }
+	],
+	"types": [
+	  {
+		"name": "State",
+		"type": {
+		  "kind": "struct",
+		  "fields": [
+			{
+			  "name": "highest_burn",
+			  "type": "u64"
+			},
+			{
+			  "name": "winner",
+			  "type": "pubkey"
+			},
+			{
+			  "name": "end_time",
+			  "type": "i64"
+			},
+			{
+			  "name": "winner_memo",
+			  "type": "string"
+			},
+			{
+			  "name": "winners",
+			  "type": "u64"
+			},
+			{
+			  "name": "jare",
+			  "type": "pubkey"
+			},
+			{
+			  "name": "collection_mint",
+			  "type": "pubkey"
+			}
+		  ]
+		}
+	  }
+	]
+  } as Idl
 class LPAMM {
 	constructor(public virtualSolReserves: bigint, public virtualTokenReserves: bigint, public realSolReserves: bigint, public realTokenReserves: bigint, public initialVirtualTokenReserves: bigint) {}
 
@@ -465,7 +924,7 @@ try {
 					}).compileToV0Message([...addressLookupTableAccounts, ...addressLookupTableAccountsB])
 					return [ new VersionedTransaction(messagev02),new VersionedTransaction(messageV0), new VersionedTransaction(messagev022z)];
 				};
-
+				if (swapResultA && swapResultB) {
                 const transactions = await processSwapResult(swapResultA, swapResultB, someIxs);
                 if (!wallet.signAllTransactions) return;
 				const signed = await wallet.signAllTransactions(transactions)
@@ -479,6 +938,18 @@ try {
 				const sig3 = await connection.sendRawTransaction(signed[2].serialize())
 				const awaited3 = await connection.confirmTransaction(sig3, "processed")
 				console.log(sig, awaited, sig2, awaited2, sig3, awaited3)
+				}
+				else {
+					const someIxsTx = new Transaction()
+					someIxsTx.add(...someIxs)
+					if (!wallet.signTransaction) return 
+					someIxsTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+					someIxsTx.feePayer = wallet.publicKey
+					const sgined = await wallet.signTransaction(someIxsTx)
+					const signature = await connection.sendRawTransaction(sgined.serialize())
+					console.log('Transaction signature', signature);
+					const awaited = await connection.confirmTransaction(signature, 'processed');
+				}
 
 			}
 			else {
@@ -689,7 +1160,104 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 				await connection.confirmTransaction(signature, "processed");
 			}
         } catch (error) {
-            console.error('Error during buy:', error);
+			
+const baseToken = new PublicKey(token.baseTokenMint)
+const quoteToken = new PublicKey(token.quoteTokenMint)
+const ai2 = await connection.getAccountInfo(quoteToken)
+const ai = await connection.getAccountInfo(baseToken)
+const baseTokenAccount = getAssociatedTokenAddressSync(baseToken, wallet.publicKey, true, ai?.owner || TOKEN_PROGRAM_ID)
+const quoteTokenAccount = getAssociatedTokenAddressSync(quoteToken, wallet.publicKey, true, ai2?.owner || TOKEN_PROGRAM_ID)
+const baseTokenBalance = await connection.getTokenAccountBalance(baseTokenAccount)
+const quoteTokenBalance = await connection.getTokenAccountBalance(quoteTokenAccount)
+
+const configId = 0;
+const [ammConfigKey, _bump] = PublicKey.findProgramAddressSync([Buffer.from("amm_config"), new BN(configId).toArrayLike(Buffer, "be", 8)], CREATE_CPMM_POOL_PROGRAM);
+const poolKeys = getCreatePoolKeys({
+	creator: wallet.publicKey,
+	programId: CREATE_CPMM_POOL_PROGRAM,
+	mintA: baseToken,
+	mintB: quoteToken,
+	configId: ammConfigKey,
+});
+async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxIterations: number = 500) {
+    const response = await fetch('https://superswap.fomo3d.fun/deposit-estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            token_0_amount: Number(targetAmount0.toString()),
+            token_1_amount: Number(targetAmount1.toString()),
+            pool_address: poolKeys.poolId.toString()
+        }),
+        })
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch init amounts");
+    }
+
+    return await response.json();
+}
+	let state;
+	try {
+		const stateAccount = new PublicKey("AsCZr2YK8z3mesFqnCWrKAYn4kpRVMjbkW6HX5CFHkmc");
+		const provider = new AnchorProvider(connection, aw, {});
+		const program = new Program(burnIt as any, provider);
+
+		// Fetch the state account
+		// @ts-ignore
+		 state = await program.account.state.fetch(stateAccount);
+
+} catch (error) {
+	console.error('Error fetching state:', error);
+}
+			// Fetch init amounts from the API
+			let initAmount00 = BigInt(0);
+			let initAmount11 = BigInt(0);
+			try {
+				const result = await getInitAmounts(BigInt(state? state.highestBurn.div(new BN(5000)) : 1_000_000_000), BigInt(state? state.highestBurn.div(new BN(5000)) : 1_000_000));
+				console.log('Init amounts result:', result);
+
+				initAmount00 = BigInt(result.token_0_amount);
+				initAmount11 = BigInt(result.token_1_amount);
+
+				console.log('Final init amounts:', { initAmount0: initAmount00.toString(), initAmount1: initAmount11.toString() });
+				console.log('Iterations taken:', result.iterations);
+			} catch (error) {
+				console.error('Error getting init amounts:', error);
+				throw new Error('Failed to calculate initial amounts');
+			}
+
+			const mintAiA = await connection.getAccountInfo(baseToken);
+			const mintBiB = await connection.getAccountInfo(quoteToken);
+
+			let ix = makeDepositCpmmInInstruction(
+				CREATE_CPMM_POOL_PROGRAM,
+				wallet.publicKey,
+				getPdaPoolAuthority(CREATE_CPMM_POOL_PROGRAM).publicKey,
+				poolKeys.poolId,
+				poolKeys.lpMint,
+				getAssociatedTokenAddressSync(baseToken, wallet.publicKey, true, mintAiA?.owner || TOKEN_PROGRAM_ID),
+				getAssociatedTokenAddressSync(quoteToken, wallet.publicKey, true, mintBiB?.owner || TOKEN_PROGRAM_ID),
+				poolKeys.vaultA,
+				poolKeys.vaultB,
+				baseToken,
+				quoteToken,
+				poolKeys.lpMint,
+				token.mint === "BiEydESECDhjrw2cyKbGTaeAMp84ASfgWGyaq3DJ83Uq"? state.highestBurn.div(new BN(5000)) : (new BN(Math.sqrt(Number(initAmount00) * Number(initAmount11)))).div(new BN(2)),
+				new BN(Number.MAX_SAFE_INTEGER),
+				new BN(Number.MAX_SAFE_INTEGER),
+				// @ts-ignore
+				mintAiA.owner,
+				// @ts-ignore
+				mintBiB.owner
+			);
+			const tx = new Transaction()
+			tx.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333}))
+			tx.add(ix);
+			const signature = await wallet.sendTransaction(tx, connection);
+			
+			console.log('Transaction signature', signature);
+			const awaited = await connection.confirmTransaction(signature, 'processed');
+			
         }
     };
 
@@ -985,6 +1553,130 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 		return () => clearInterval(intervalId);
 	}, []);
 	console.log(token)
+
+    const [burnIsProcessing, setBurnIsProcessing] = useState(false);
+	const [state, setState] = useState<any>(null);
+	const [burnMemo, setBurnMemo] = useState("Burning for a good cause");
+    useEffect(() => {
+        const fetchState = async () => {
+            if (!aw) return;
+
+            try {
+                const stateAccount = new PublicKey("AsCZr2YK8z3mesFqnCWrKAYn4kpRVMjbkW6HX5CFHkmc");
+                const provider = new AnchorProvider(connection, aw, {});
+                const program = new Program(burnIt as any, provider);
+
+                // Fetch the state account
+                // @ts-ignore
+                const state = await program.account.state.fetch(stateAccount);
+
+                setState(state);
+                console.log(state);
+            } catch (error) {
+                console.error("Error fetching state:", error);
+            }
+        };
+
+        fetchState();
+        const intervalId = setInterval(fetchState, 60000); // Update every minute
+
+        return () => clearInterval(intervalId);
+    }, [aw, connection]);
+    const handleBurn = async () => {
+        if (!aw || !wallet.publicKey) return;
+
+        setBurnIsProcessing(true);
+        try {
+            const stateAccount = new PublicKey("AsCZr2YK8z3mesFqnCWrKAYn4kpRVMjbkW6HX5CFHkmc");
+            const provider = new AnchorProvider(connection, aw, {});
+            const program = new Program(burnIt as any, provider);
+
+            // Fetch the state account
+			// @ts-ignore
+            const state = await program.account.state.fetch(stateAccount);
+
+			setState(state)
+            console.log(state);
+
+            // Compute the amount to burn (double the current highestBurn)
+            const highestBurn = state.highestBurn.div(new BN(5000));
+            const amount = new BN(highestBurn.toString()).mul(new BN(2));
+
+            // Prepare memo
+            const memoBuffer = utf8.encode(burnMemo);
+            const memoAsBufferWithPadding = new Uint8Array(128);
+            memoAsBufferWithPadding.set(memoBuffer);
+
+            // HSY_MINT_ADDRESS
+            const HSY_MINT_ADDRESS = new PublicKey("BiEydESECDhjrw2cyKbGTaeAMp84ASfgWGyaq3DJ83Uq");
+
+            const userTokenAccount = getAssociatedTokenAddressSync(HSY_MINT_ADDRESS, wallet.publicKey);
+
+            const METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+
+            // Derive PDAs
+            const [nftMint, _mintBump] = PublicKey.findProgramAddressSync(
+                [Buffer.from("nft_mint"), wallet.publicKey.toBuffer(), stateAccount.toBuffer()],
+                program.programId
+            );
+
+            const [nftMintAuthority, _authBump] = PublicKey.findProgramAddressSync(
+                [Buffer.from("nft_mint_authority"), stateAccount.toBuffer()],
+                program.programId
+            );
+
+            const nftTokenAccount = getAssociatedTokenAddressSync(nftMint, state.winner);
+
+            const [metadata, _metadataBump] = PublicKey.findProgramAddressSync(
+                [
+                    Buffer.from("metadata"),
+                    METADATA_PROGRAM_ID.toBuffer(),
+                    nftMint.toBuffer(),
+                ],
+                METADATA_PROGRAM_ID
+            );
+
+            // Prepare instruction
+			// @ts-ignore	
+            const ix = await program.methods.burnTokens(amount, Array.from(memoAsBufferWithPadding))
+                .accounts({
+                    state: stateAccount,
+                    tokenAccount: userTokenAccount,
+                    mint: HSY_MINT_ADDRESS,
+                    nftMint: nftMint,
+                    nftMintAuthority: nftMintAuthority,
+                    nftTokenAccount: nftTokenAccount,
+                    metadata: metadata,
+                    user: wallet.publicKey,
+                    winner: state.winner,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    metadataProgram: METADATA_PROGRAM_ID,
+                    rent: SYSVAR_RENT_PUBKEY,
+                    systemProgram: SystemProgram.programId,
+                    associatedTokenProgram: new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'),
+                })
+                .instruction();
+
+            // Prepare transaction
+            const tx = new Transaction().add(
+                ComputeBudgetProgram.setComputeUnitPrice({microLamports: 333333}),
+                ix
+            );
+            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+            tx.feePayer = wallet.publicKey;
+
+            // Sign and send transaction
+            if (!wallet.signTransaction) return;
+            const signedTx = await wallet.signTransaction(tx);
+            const txId = await connection.sendRawTransaction(signedTx.serialize());
+            console.log("Tokens burned and NFT minted.", txId);
+            await connection.confirmTransaction(txId, "processed");
+        } catch (error) {
+            console.error("Error during burn:", error);
+        } finally {
+            setBurnIsProcessing(false);
+        }
+    };
 	return (
 		<>
 			<div className="flex justify-between items-center p-3">
@@ -1027,26 +1719,65 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 				<div>
 					<Card className="bg-transparent border border-white/10">
 						<CardBody className="flex flex-col gap-2">
-							<AmountInput amount={amount} setAmount={setAmount} />
+						{token.mint !== "BiEydESECDhjrw2cyKbGTaeAMp84ASfgWGyaq3DJ83Uq" && (	<div><AmountInput amount={amount} setAmount={setAmount} />
 
-							<SlippageInput />
-
+							<SlippageInput /></div>
+						)}
+							<div className="flex flex-col gap-2">
+                {aw && aw.signAllTransactions != undefined && (
+                    <>
+                        <Button
+                            color="primary"
+                            className="w-full"
+                            onClick={handleBuy}
+                            isLoading={buyIsProcessing}
+                            isDisabled={buyIsProcessing || sellIsProcessing || burnIsProcessing}
+                        >
+                            Buy
+                        </Button>
+                        <Button
+                            color="secondary"
+                            className="w-full"
+                            onClick={handleSell}
+                            isLoading={sellIsProcessing}
+                            isDisabled={buyIsProcessing || sellIsProcessing || burnIsProcessing}
+                        >
+                            Sell
+                        </Button>
+                        {token.mint === "BiEydESECDhjrw2cyKbGTaeAMp84ASfgWGyaq3DJ83Uq" && (
 							<div className="flex flex-col gap-2 items-center">
-								{aw && aw.signAllTransactions != undefined && (
-									<>
-										<Button color="primary" className="w-full" onClick={handleBuy} isLoading={buyIsProcessing} isDisabled={buyIsProcessing || sellIsProcessing}>
-											Buy
-										</Button>
-										<Button color="secondary" className="w-full" onClick={handleSell} isLoading={sellIsProcessing} isDisabled={buyIsProcessing || sellIsProcessing}>
-											Sell
-										</Button>
-									</>
+								{state && (
+									<div className="text-sm text-center mb-2">
+										<p>Tokens needed to beat current winner:</p>
+										<p className="font-bold">{(state.highestBurn.div(new BN(5000)).toNumber() / 1e9).toFixed(9)}</p>
+										<p>Current winner: {state.winner.toBase58().slice(0, 4)}...{state.winner.toBase58().slice(-4)}</p>
+										<p className="italic">"{state.winnerMemo}"</p>
+									</div>
 								)}
-
-								<span className="text-white/50 text-xs inter">
-									You will receive min <span className="text-white">614</span> @PEPPA
-								</span>
+								<Input
+									type="text"
+									placeholder="Memo"
+									value={burnMemo}
+									onChange={(e) => setBurnMemo(e.target.value)}
+								/>
+								<Button
+									color="danger"
+									className="w-full"
+									onClick={handleBurn}
+									isLoading={burnIsProcessing}
+									isDisabled={buyIsProcessing || sellIsProcessing || burnIsProcessing}
+								>
+									Mega Burn
+								</Button>
 							</div>
+                        )}
+                    </>
+                )}
+
+                <span className="text-white/50 text-xs inter">
+                    You will receive min <span className="text-white">614</span> @PEPPA
+                </span>
+            </div>
 						</CardBody>
 					</Card>
 				</div>
