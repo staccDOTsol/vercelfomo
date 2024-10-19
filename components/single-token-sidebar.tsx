@@ -1749,6 +1749,7 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 										<p>Tokens needed to beat current winner:</p>
 										<p className="font-bold">{(state.highestBurn.div(new BN(5000)).toNumber() / 1e9).toFixed(9)}</p>
 										<p>Current winner: {state.winner.toBase58().slice(0, 4)}...{state.winner.toBase58().slice(-4)}</p>
+										<p>Wins in {Math.floor((state.endTime.toNumber() - Date.now() / 1000))} seconds</p>
 										<p className="italic">"{state.winnerMemo}"</p>
 									</div>
 								)}
