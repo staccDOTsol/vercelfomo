@@ -1,6 +1,6 @@
 "use client";
 
-import { Divider, Image, Link } from "@nextui-org/react";
+import { Divider, Image, Link, Switch } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 import Sidebar from "@/components/sidebar";
 import Logo from "@/app/assets/images/logo_color.svg";
@@ -19,17 +19,19 @@ export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { tog
 	const [searchQuery, setSearchQuery] = useState("");
 	const debouncedSearchQuery = useDebounce(searchQuery, 300);
 	const [searchResults, setSearchResults] = useState([]);
+	const [isBondingCurveOnly, setIsBondingCurveOnly] = useState(false);
+	const [isGobblerOnly, setIsGobblerOnly] = useState(false);
 
 	useEffect(() => {
 		if (debouncedSearchQuery) {
-			fetch(`/api/pairs/new?search=${encodeURIComponent(debouncedSearchQuery)}`)
+			fetch(`/api/pairs/new?search=${encodeURIComponent(debouncedSearchQuery)}&isBondingCurve=${isBondingCurveOnly}&isGobbler=${isGobblerOnly}`)
 				.then(response => response.json())
 				.then(data => setSearchResults(data))
 				.catch(error => console.error('Error fetching search results:', error));
 		} else {
 			setSearchResults([]);
 		}
-	}, [debouncedSearchQuery]);
+	}, [debouncedSearchQuery, isBondingCurveOnly, isGobblerOnly]);
 
 	return (
 		<>
@@ -62,9 +64,24 @@ export default function SidebarContainer({ toggleSidebar, isSidebarOpen }: { tog
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 					/>
-				</div>
+					<div className="flex items-center mt-2">
+						<Switch
+							size="sm"
+							checked={isBondingCurveOnly}
+							onChange={(e) => setIsBondingCurveOnly(e.target.checked)}
+						/>
+						<span className="ml-2 text-sm">Bonding Curve Only</span>
+						<Switch
+							size="sm"
+							checked={isGobblerOnly}
+							onChange={(e) => setIsGobblerOnly(e.target.checked)}
+						/>
+						<span className="ml-2 text-sm">Gobbler Only</span>
+					</div>
+					</div>
 
 				<ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
+
 					{searchResults.length > 0 ? (
 						<div className="mb-4">
 							{searchResults.map((result: any, index: number) => (

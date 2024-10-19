@@ -2,7 +2,7 @@
 
 import { useContext, useEffect, useState } from "react";
 import Image from "next/image";
-import { Button, Card, CardBody, Divider, Link, Progress, Tab, Tabs } from "@nextui-org/react";
+import { Button, Card, CardBody, Divider, Link, Progress, Tab, Tabs, Switch } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 import useCoins from "@/app/hooks/useCoins";
 import { useRouter } from 'next/navigation'
@@ -10,29 +10,45 @@ import ItemFilterBar from "@/components/item-filter-bar";
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { ModalContext } from "@/app/providers";
 
-import Logo from "@/app/assets/images/logo_color.svg";
 import usePairs from "./hooks/usePairs";
 
 export default function Home() {
   const [activeFilter, setActiveFilter] = useState('trending');
   const [parent, enableAnimations] = useAutoAnimate()
   const router = useRouter();
-  const { pairs: coins, isLoading, error } = usePairs();
+  const [showBondingCurveOnly, setShowBondingCurveOnly] = useState(false);
+  const { pairs: coins, isLoading, error } = usePairs(showBondingCurveOnly);
+  const [filteredCoins, setFilteredCoins] = useState<any[]>([]);
 
-  const filteredCoins = coins && coins.filter((coin: any) => {
-    switch (activeFilter) {
-      case 'new':
-        return coin.is_new;
-      case 'rising':
-        return coin.is_rising;
-      case 'top':
-        return coin.is_top;
-      case 'trending':
-        return coin.is_trending;
-      default:
-        return true;
+  useEffect(() => {
+    if (coins) {
+      const filtered = coins.filter((coin: any) => {
+        const bondingCurveMatch = !showBondingCurveOnly || coin.isBondingCurve === true;
+        let filterMatch = true;
+        
+        switch (activeFilter) {
+          case 'new':
+            filterMatch = coin.is_new;
+            break;
+          case 'rising':
+            filterMatch = coin.is_rising;
+            break;
+          case 'top':
+            filterMatch = coin.is_top;
+            break;
+          case 'trending':
+            filterMatch = coin.is_trending;
+            break;
+        }
+        
+        return bondingCurveMatch && filterMatch;
+      });
+      
+      setFilteredCoins(filtered);
     }
-  });
+  }, [coins, showBondingCurveOnly, activeFilter]);
+    
+
 
   const modalContext = useContext(ModalContext);
 
@@ -57,6 +73,13 @@ export default function Home() {
           <section className="p-4">
             <div className="pb-4 w-full">
               <ItemFilterBar setActiveFilter={setActiveFilter} />
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Bonding Curve Only</span>
+                <Switch
+                  checked={showBondingCurveOnly}
+                  onChange={(e) => setShowBondingCurveOnly(e.target.checked)}
+                />
+              </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-2">
               {filteredCoins && filteredCoins.length > 0 && filteredCoins.map((coin: any) => (
@@ -111,7 +134,12 @@ export default function Home() {
                           <span>{coin.buys || 'N/A'} buys</span>/<span>{coin.sells || 'N/A'} sells</span>
                         </div>
                       </div>
-                      <Progress value={coin.completed ? coin.completed : 0} classNames={{ indicator: "bg-[#9648fe]" }} size="sm" />
+                      <Progress 
+                        value={coin.completed ? coin.completed : 0} 
+                        classNames={{ indicator: "bg-[#9648fe]" }} 
+                        size="sm" 
+                        aria-label={`Progress for ${coin.mint.metadata.name}`}
+                      />
                     </div>
                   </CardBody>
                 </Card>

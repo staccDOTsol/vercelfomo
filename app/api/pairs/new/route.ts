@@ -7,6 +7,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const count = parseInt(searchParams.get('count') || '29000', 10);
   const search = searchParams.get('search') || '';
+  const isBondingCurve = searchParams.get('isBondingCurve') === 'true';
+  const isGobbler = searchParams.get('isGobbler') === 'true';
 
   const redis = new Redis(REDIS_URL as string);
 
@@ -34,11 +36,14 @@ export async function GET(request: Request) {
       };
       
       const filteredPairs = pairs.filter((pair: any) => {
-        return searchInObject(pair, search);
+        const searchMatch = searchInObject(pair, search);
+        const bondingCurveMatch = !isBondingCurve || pair.isBondingCurve === true;
+        const gobblerMatch = !isGobbler || pair.isBondingCurve === false;
+        return searchMatch && bondingCurveMatch && gobblerMatch;
       });
 
-      // Log the search query for debugging
-      console.log(`Search query: ${search}`);
+      // Log the search query and isBondingCurve filter for debugging
+      console.log(`Search query: ${search}, isBondingCurve: ${isBondingCurve}, isGobbler: ${isGobbler}`);
 
       // Log the number of filtered pairs
       console.log(`Number of filtered pairs: ${filteredPairs.length}`);

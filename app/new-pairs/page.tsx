@@ -1,7 +1,7 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableColumn, Spinner, Divider, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableColumn, Spinner, Divider, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Switch } from "@nextui-org/react";
 import usePairs from "@/app/hooks/usePairs";
 import { Icon } from "@iconify/react";
 
@@ -11,11 +11,27 @@ export default function NewPairs() {
 	const [selectedAgeFilterKeys, setSelectedAgeFilterKeys] = useState<string[]>(['']);
 	const [selectedLiquidityFilterKeys, setSelectedLiquidityFilterKeys] = useState<string[]>(['']);
 	const [selectedVolumeFilterKeys, setSelectedVolumeFilterKeys] = useState<string[]>(['']);
+	const [showBondingCurveOnly, setShowBondingCurveOnly] = useState(false);
+	const [showGobblerOnly, setShowGobblerOnly] = useState(false);
+	const [filteredPairs, setFilteredPairs] = useState(pairs);
 
 	const selectedTimelineValue = useMemo(() => Array.from(selectedTimelineKeys).join(", ").replaceAll("_", " "), [selectedTimelineKeys]);
 	const selectedAgeFilterValue = useMemo(() => Array.from(selectedAgeFilterKeys).join(", ").replaceAll("_", " "), [selectedAgeFilterKeys]);
 	const selectedLiquidityFilterValue = useMemo(() => Array.from(selectedLiquidityFilterKeys).join(", ").replaceAll("_", " "), [selectedLiquidityFilterKeys]);
 	const selectedVolumeFilterValue = useMemo(() => Array.from(selectedVolumeFilterKeys).join(", ").replaceAll("_", " "), [selectedVolumeFilterKeys]);
+
+	useEffect(() => {
+		if (pairs) {
+			const filtered = pairs.filter((pair: any) => {
+				const bondingCurveMatch = !showBondingCurveOnly || pair.isBondingCurve === true;
+				const gobblerMatch = !showGobblerOnly || pair.isGobbler === true;
+				// Add other filter conditions here if needed
+				return bondingCurveMatch && gobblerMatch;
+			});
+			setFilteredPairs(filtered);
+		}
+	}, [pairs, showBondingCurveOnly, showGobblerOnly]);
+
 	return (
 		<div className="">
 			<div style={{ height: "calc(100vh - 64px)" }} className="flex flex-col w-screen md:w-full">
@@ -48,7 +64,7 @@ export default function NewPairs() {
 								<DropdownItem key="Last 6 hours">Last 6 hours</DropdownItem>
 								<DropdownItem key="Last 24 hours">Last 24 hours</DropdownItem>
 							</DropdownMenu>
-						</Dropdown>
+						  </Dropdown>
 
             <div className="bg-white/10 flex w-fit p-1 rounded-md leading-none items-center gap-1">
               <Icon icon="cuida:fire-outline" />
@@ -225,6 +241,19 @@ export default function NewPairs() {
                 </DropdownItem>
 							</DropdownMenu>
 						</Dropdown>
+
+						<div className="flex items-center gap-2">
+							<span className="text-sm">Bonding Curve Only</span>
+							<Switch
+								checked={showBondingCurveOnly}
+								onChange={(e) => setShowBondingCurveOnly(e.target.checked)}
+							/>
+							<span className="text-sm">Gobbler Only</span>
+							<Switch
+								checked={showGobblerOnly}
+								onChange={(e) => setShowGobblerOnly(e.target.checked)}
+							/>
+						</div>
 					</div>
 				</div>
 				<Table
@@ -255,8 +284,8 @@ export default function NewPairs() {
 					</TableHeader>
 
 					<TableBody isLoading={isLoading} emptyContent={"No pairs found"} loadingContent={<Spinner />} className="p-10">
-						{pairs &&
-							pairs.map((pair: any) => (
+						{filteredPairs &&
+							filteredPairs.map((pair: any) => (
 								<TableRow key={pair.id}>
 									<TableCell className="text-md">{pair.token}</TableCell>
 									<TableCell className="text-md">{pair.price}</TableCell>
