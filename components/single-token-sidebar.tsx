@@ -1248,6 +1248,18 @@ async function getInitAmounts(targetAmount0: bigint, targetAmount1: bigint, maxI
 				mintBiB.owner
 			);
 			const tx = new Transaction()
+			const anai = await connection.getAccountInfo(getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey))
+			if (!anai){
+				tx.add(
+					createAssociatedTokenAccountInstruction(
+						wallet.publicKey,
+						getAssociatedTokenAddressSync(poolKeys.lpMint, wallet.publicKey),
+						wallet.publicKey,
+						poolKeys.lpMint
+					)
+				);
+			}
+
 			tx.add(ComputeBudgetProgram.setComputeUnitPrice({microLamports: 33333}))
 			tx.add(ix);
 			const signature = await wallet.sendTransaction(tx, connection);
